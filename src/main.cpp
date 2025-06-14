@@ -180,6 +180,10 @@ float g_AngleX = 0.0f;
 float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
+float pos_x = 0.0f;
+float pos_Y = 0.0f;
+float pos_Z = 0.0f;
+
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
@@ -293,24 +297,28 @@ int main(int argc, char* argv[])
     //
     LoadShadersFromFiles();
 
-    // Construímos a representação de objetos geométricos através de malhas de triângulos
-    ObjModel spheremodel("../../data/sphere.obj");
-    ComputeNormals(&spheremodel);
-    BuildTrianglesAndAddToVirtualScene(&spheremodel);
-
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
 
-    ObjModel planemodel("../../data/plane.obj");
-    ComputeNormals(&planemodel);
-    BuildTrianglesAndAddToVirtualScene(&planemodel);
+    // ObjModel skyboxmodel("../../data/skybox.obj");
+    // ComputeNormals(&skyboxmodel);
+    // BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
 
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
         BuildTrianglesAndAddToVirtualScene(&model);
     }
+
+    // std::vector<std::string> faces = {
+    //     "../../data/skybox/right.png",
+    //     "../../data/skybox/left.png",
+    //     "../../data/skybox/top.png",
+    //     "../../data/skybox/bottom.png",
+    //     "../../data/skybox/front.png",
+    //     "../../data/skybox/back.png"
+    // };
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -399,19 +407,7 @@ int main(int argc, char* argv[])
             delta_t = current_time - prev_time;
             prev_time = current_time;
 
-            // Realiza movimentação de objetos
-            if (D_pressed)
-                // Movimenta câmera para direita
-                camera_position_c += u * speed * delta_t;
-            if (W_pressed)
-                // Movimenta câmera para frente
-                camera_position_c += -w * speed * delta_t;
-            if (A_pressed)
-                // Movimenta câmera para esquerda
-                camera_position_c += -u * speed * delta_t;
-            if (S_pressed)
-                // Movimenta câmera para trás
-                camera_position_c += w * speed * delta_t;
+            camera_position_c = glm::vec4(pos_x+1.5, pos_Y+1.0, pos_Z, 1.0f);
         }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -454,32 +450,20 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
+        #define BUNNY 0
+        // #define SKYBOX 1
 
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
-
-        // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(g_AngleZ)
-              * Matrix_Rotate_Y(g_AngleY)
-              * Matrix_Rotate_X(g_AngleX);
+        model = Matrix_Translate(pos_x,pos_Y,pos_Z)
+            * Matrix_Rotate_Z(g_AngleZ)
+            * Matrix_Rotate_Y(g_AngleY)
+            * Matrix_Rotate_X(g_AngleX);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
-
-        // Desenhamos o modelo do plano
-        model = Matrix_Translate(0.0f,-1.0f,0.0f)
-                * Matrix_Scale(2.0f,1.0f,2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
-
+        
+        // Desenhamos o modelo do coelho
+        if(look_at){
+            DrawVirtualObject("the_bunny");
+        }
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1198,77 +1182,69 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         // Teste se o usuário pressionou a tecla D
     if (key == GLFW_KEY_D)
     {
-        if (action == GLFW_PRESS)
+        if (action == GLFW_REPEAT){
             // Usuário apertou a tecla D, então atualizamos o estado para pressionada
             D_pressed = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
-            D_pressed = false;
+            pos_x = pos_x + 0.05;
+        }
 
         else if (action == GLFW_REPEAT)
+            pos_x = pos_x + 0.05;
             // Usuário está segurando a tecla D e o sistema operacional está
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            ;
     }
 
     // Teste se o usuário pressionou a tecla A
     if (key == GLFW_KEY_A)
     {
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS){
             // Usuário apertou a tecla A, então atualizamos o estado para pressionada
             A_pressed = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla A, então atualizamos o estado para NÃO pressionada
-            A_pressed = false;
+            pos_x = pos_x - 0.05;
+        }
 
         else if (action == GLFW_REPEAT)
             // Usuário está segurando a tecla A e o sistema operacional está
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+            pos_x = pos_x - 0.05;
     }
 
     // Teste se o usuário pressionou a tecla S
     if (key == GLFW_KEY_S)
     {
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS){
             // Usuário apertou a tecla S, então atualizamos o estado para pressionada
             S_pressed = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla S, então atualizamos o estado para NÃO pressionada
-            S_pressed = false;
+            pos_Z = pos_Z + 0.05;
+        }
 
         else if (action == GLFW_REPEAT)
             // Usuário está segurando a tecla S e o sistema operacional está
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+            pos_Z = pos_Z + 0.05;
     }
 
     // Teste se o usuário pressionou a tecla W
     if (key == GLFW_KEY_W)
     {
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS){
             // Usuário apertou a tecla W, então atualizamos o estado para pressionada
             W_pressed = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla W, então atualizamos o estado para NÃO pressionada
-            W_pressed = false;
+            pos_Z = pos_Z - 0.05;
+        }
 
         else if (action == GLFW_REPEAT)
             // Usuário está segurando a tecla W e o sistema operacional está
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+            pos_Z = pos_Z - 0.05;
     }
 
 }
