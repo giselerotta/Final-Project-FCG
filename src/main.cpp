@@ -397,8 +397,8 @@ int main(int argc, char* argv[])
         if(look_at){
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(pos_x, pos_y + 3.0f, pos_z -5.0f,1.0f); // Ponto "c", centro da câmera
-            camera_lookat_l    = glm::vec4(pos_x,pos_y,pos_z,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_position_c  = glm::vec4(pos_x + x, pos_y + 3.0f+ y, pos_z + z,1.0f); // Ponto "c", centro da câmera
+            camera_lookat_l    = glm::vec4(pos_x,pos_y + 3.0f, pos_z,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         }
@@ -460,8 +460,8 @@ int main(int argc, char* argv[])
         #define SKYBOX 1
         #define CHARACTER 2
 
-        model = Matrix_Translate(pos_x,pos_y,pos_z) 
-        * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        model = Matrix_Translate(pos_x,pos_y - 5.0f,pos_z) 
+        * Matrix_Scale(0.05f, 0.05f, 0.05f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
