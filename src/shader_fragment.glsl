@@ -21,6 +21,8 @@ uniform mat4 projection;
 // Identificador que define qual objeto está sendo desenhado no momento
 #define BUNNY 0
 #define SKYBOX 1
+#define CHARACTER 2
+
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -84,7 +86,7 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
-    if ( object_id == BUNNY )
+    if ( object_id == BUNNY || object_id == CHARACTER)
     {
         // PREENCHA AQUI
         // Propriedades espectrais do coelho
