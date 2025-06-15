@@ -42,6 +42,7 @@
 
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
+#include <stb_image.h>
 
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
@@ -115,6 +116,7 @@ void PopMatrix(glm::mat4& M);
 void BuildTrianglesAndAddToVirtualScene(ObjModel*); // Constrói representação de um ObjModel como malha de triângulos para renderização
 void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso não existam.
 void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
+void LoadTextureImage(const char* filename); // Função que carrega imagens de textura
 void DrawVirtualObject(const char* object_name); // Desenha um objeto armazenado em g_VirtualScene
 GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
 GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
@@ -181,7 +183,7 @@ float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
 float pos_x = 0.0f;
-float pos_Y = 0.0f;
+float pos_Y = -10.0f;
 float pos_Z = 0.0f;
 
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
@@ -223,6 +225,8 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+
+GLuint g_NumLoadedTextures = 0;
 
 int main(int argc, char* argv[])
 {
@@ -297,28 +301,27 @@ int main(int argc, char* argv[])
     //
     LoadShadersFromFiles();
 
+    // Imagens da SkyBox
+    LoadTextureImage("../../textures/right.png");        // TextureImage0
+    LoadTextureImage("../../textures/left.png");       // TextureImage1
+    LoadTextureImage("../../textures/top.png");        // TextureImage2
+    LoadTextureImage("../../textures/bottom.png");       // TextureImage3
+    LoadTextureImage("../../textures/front.png");      // TextureImage4
+    LoadTextureImage("../../textures/back.png");         // TextureImage5
+
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
 
-    // ObjModel skyboxmodel("../../data/skybox.obj");
-    // ComputeNormals(&skyboxmodel);
-    // BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
+    ObjModel skyboxmodel("../../data/skybox.obj");
+    ComputeNormals(&skyboxmodel);
+    BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
 
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
         BuildTrianglesAndAddToVirtualScene(&model);
     }
-
-    // std::vector<std::string> faces = {
-    //     "../../data/skybox/right.png",
-    //     "../../data/skybox/left.png",
-    //     "../../data/skybox/top.png",
-    //     "../../data/skybox/bottom.png",
-    //     "../../data/skybox/front.png",
-    //     "../../data/skybox/back.png"
-    // };
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -340,12 +343,11 @@ int main(int argc, char* argv[])
     float prev_time = (float)glfwGetTime();
     float delta_t;
 
-    glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f);
-    glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f);
-    glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c;
+    glm::vec4 camera_position_c;
+    glm::vec4 camera_lookat_l;
+    glm::vec4 camera_view_vector;
     glm::vec4 w = glm::vec4(0.0f,0.0f,1.0f,0.0f);
-    glm::vec4 v = glm::vec4(0.0f,1.0f,0.0f,0.0f);    // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-    glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+    glm::vec4 camera_up_vector; // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
     if(look_at){
         g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
@@ -419,7 +421,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -50.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -451,12 +453,9 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define BUNNY 0
-        // #define SKYBOX 1
+        #define SKYBOX 1
 
-        model = Matrix_Translate(pos_x,pos_Y,pos_Z)
-            * Matrix_Rotate_Z(g_AngleZ)
-            * Matrix_Rotate_Y(g_AngleY)
-            * Matrix_Rotate_X(g_AngleX);
+        model = Matrix_Translate(pos_x,pos_Y,pos_Z);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         
@@ -464,6 +463,13 @@ int main(int argc, char* argv[])
         if(look_at){
             DrawVirtualObject("the_bunny");
         }
+
+        //glCullFace(GL_FRONT);
+        glUniform1i(g_object_id_uniform, SKYBOX);
+        model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(3.0f,3.0f,3.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        DrawVirtualObject("skybox");
+        //glCullFace(GL_BACK);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -496,6 +502,58 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+
+// Função que carrega uma imagem para ser utilizada como textura
+void LoadTextureImage(const char* filename)
+{
+    printf("Carregando imagem \"%s\"... ", filename);
+
+    // Primeiro fazemos a leitura da imagem do disco
+    stbi_set_flip_vertically_on_load(true);
+    int width;
+    int height;
+    int channels;
+    unsigned char *data = stbi_load(filename, &width, &height, &channels, 3);
+
+    if ( data == NULL )
+    {
+        fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename);
+        std::exit(EXIT_FAILURE);
+    }
+
+    printf("OK (%dx%d).\n", width, height);
+
+    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+    GLuint texture_id;
+    GLuint sampler_id;
+    glGenTextures(1, &texture_id);
+    glGenSamplers(1, &sampler_id);
+
+    // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Parâmetros de amostragem da textura.
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Agora enviamos a imagem lida do disco para a GPU
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
+    GLuint textureunit = g_NumLoadedTextures;
+    glActiveTexture(GL_TEXTURE0 + textureunit);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindSampler(textureunit, sampler_id);
+
+    stbi_image_free(data);
+
+    g_NumLoadedTextures += 1;
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição

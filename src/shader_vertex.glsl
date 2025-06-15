@@ -18,6 +18,8 @@ uniform mat4 projection;
 out vec4 position_world;
 out vec4 normal;
 
+out vec2 texcoords;
+
 void main()
 {
     // A variável gl_Position define a posição final de cada vértice
@@ -55,5 +57,7 @@ void main()
     // Veja slides 123-151 do documento Aula_07_Transformacoes_Geometricas_3D.pdf.
     normal = inverse(transpose(model)) * normal_coefficients;
     normal.w = 0.0;
+
+    texcoords = texture_coefficients;
 }
 
