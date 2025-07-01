@@ -302,20 +302,21 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Imagens da SkyBox
-    LoadTextureImage("../../textures/right.png");        // TextureImage0
-    LoadTextureImage("../../textures/left.png");       // TextureImage1
-    LoadTextureImage("../../textures/top.png");        // TextureImage2
-    LoadTextureImage("../../textures/bottom.png");       // TextureImage3
-    LoadTextureImage("../../textures/front.png");      // TextureImage4
-    LoadTextureImage("../../textures/back.png");         // TextureImage5
+    LoadTextureImage("../../data/textures/right.png");        // TextureImage0
+    LoadTextureImage("../../data/textures/left.png");       // TextureImage1
+    LoadTextureImage("../../data/textures/top.png");        // TextureImage2
+    LoadTextureImage("../../data/textures/bottom.png");       // TextureImage3
+    LoadTextureImage("../../data/textures/front.png");      // TextureImage4
+    LoadTextureImage("../../data/textures/back.png");         // TextureImage5
 
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
 
-    ObjModel characatermodel("../../data/male_mesh.obj");
+    ObjModel characatermodel("../../data/character/model.obj");
     ComputeNormals(&characatermodel);
     BuildTrianglesAndAddToVirtualScene(&characatermodel);
+    PrintObjModelInfo(&characatermodel);
 
     ObjModel skyboxmodel("../../data/skybox.obj");
     ComputeNormals(&skyboxmodel);
@@ -397,8 +398,8 @@ int main(int argc, char* argv[])
         if(look_at){
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(pos_x + x, pos_y + 3.0f+ y, pos_z + z,1.0f); // Ponto "c", centro da câmera
-            camera_lookat_l    = glm::vec4(pos_x,pos_y + 3.0f, pos_z,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_position_c  = glm::vec4(pos_x + x, pos_y + 10.0f+ y, pos_z + 2.0f + z,1.0f); // Ponto "c", centro da câmera
+            camera_lookat_l    = glm::vec4(pos_x,pos_y + 10.0f, pos_z + 2.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         }
@@ -413,7 +414,7 @@ int main(int argc, char* argv[])
             delta_t = current_time - prev_time;
             prev_time = current_time;
 
-            camera_position_c = glm::vec4(pos_x+1.5, pos_y+1.0, pos_z, 1.0f);
+            camera_position_c = glm::vec4(pos_x+1.5, pos_y+8.0, pos_z, 1.0f);
         }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -425,7 +426,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -50.0f; // Posição do "far plane"
+        float farplane  = -100.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -461,7 +462,7 @@ int main(int argc, char* argv[])
         #define CHARACTER 2
 
         model = Matrix_Translate(pos_x,pos_y - 5.0f,pos_z) 
-        * Matrix_Scale(0.05f, 0.05f, 0.05f);
+        * Matrix_Scale(0.1f, 0.1f, 0.1f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
@@ -477,7 +478,7 @@ int main(int argc, char* argv[])
 
         //glCullFace(GL_FRONT);
         glUniform1i(g_object_id_uniform, SKYBOX);
-        model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(3.0f,3.0f,3.0f);
+        model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         DrawVirtualObject("skybox");
         //glCullFace(GL_BACK);
@@ -1254,11 +1255,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         if (action == GLFW_REPEAT){
             // Usuário apertou a tecla D, então atualizamos o estado para pressionada
             D_pressed = true;
-            pos_x = pos_x + 0.05;
+            pos_x = pos_x + 0.1;
         }
 
         else if (action == GLFW_REPEAT)
-            pos_x = pos_x + 0.05;
+            pos_x = pos_x + 0.1;
             // Usuário está segurando a tecla D e o sistema operacional está
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
@@ -1271,7 +1272,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         if (action == GLFW_PRESS){
             // Usuário apertou a tecla A, então atualizamos o estado para pressionada
             A_pressed = true;
-            pos_x = pos_x - 0.05;
+            pos_x = pos_x - 0.1;
         }
 
         else if (action == GLFW_REPEAT)
@@ -1279,7 +1280,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            pos_x = pos_x - 0.05;
+            pos_x = pos_x - 0.1;
     }
 
     // Teste se o usuário pressionou a tecla S
@@ -1288,7 +1289,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         if (action == GLFW_PRESS){
             // Usuário apertou a tecla S, então atualizamos o estado para pressionada
             S_pressed = true;
-            pos_z = pos_z + 0.05;
+            pos_z = pos_z + 0.1;
         }
 
         else if (action == GLFW_REPEAT)
@@ -1296,7 +1297,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            pos_z = pos_z + 0.05;
+            pos_z = pos_z + 0.1;
     }
 
     // Teste se o usuário pressionou a tecla W
@@ -1305,7 +1306,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         if (action == GLFW_PRESS){
             // Usuário apertou a tecla W, então atualizamos o estado para pressionada
             W_pressed = true;
-            pos_z = pos_z - 0.05;
+            pos_z = pos_z - 0.1;
         }
 
         else if (action == GLFW_REPEAT)
@@ -1313,7 +1314,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // disparando eventos de repetição. Neste caso, não precisamos
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
-            pos_z = pos_z - 0.05;
+            pos_z = pos_z - 0.1;
     }
 
 }
