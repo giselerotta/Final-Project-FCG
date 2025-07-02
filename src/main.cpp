@@ -314,17 +314,17 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Imagens da SkyBox
-    LoadTextureImage("data/textures/right.png");        // TextureImage0
-    LoadTextureImage("data/textures/left.png");       // TextureImage1
-    LoadTextureImage("data/textures/top.png");        // TextureImage2
-    LoadTextureImage("data/textures/bottom.png");       // TextureImage3
+    LoadTextureImage("data/textures/left.png");       // TextureImage0
+    LoadTextureImage("data/textures/right.png");      // TextureImage1
+    LoadTextureImage("data/textures/bottom.png");     // TextureImage2
+    LoadTextureImage("data/textures/top.png");        // TextureImage3
     LoadTextureImage("data/textures/front.png");      // TextureImage4
-    LoadTextureImage("data/textures/back.png");         // TextureImage5
+    LoadTextureImage("data/textures/back.png");       // TextureImage5
 
     // Texturas do modelo target
-    LoadTextureImage("data/target/RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg");  // TextureImage6
-    LoadTextureImage("data/target/RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg");    // TextureImage7
-    LoadTextureImage("data/target/RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg");    // TextureImage8
+    LoadTextureImage("data/target/RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg");    // TextureImage6
+    LoadTextureImage("data/target/RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg");  // TextureImage7
+    LoadTextureImage("data/target/RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg");    // TextureImage8
     LoadTextureImage("data/target/RGB_da371e9e3c3d460c986fe6316c40bc6c_Wood_stand_Diffuse_final.jpeg"); // TextureImage9
 
     ObjModel bunnymodel("data/bunny.obj");
@@ -681,6 +681,20 @@ void LoadShadersFromFiles()
     g_Ka_uniform         = glGetUniformLocation(g_GpuProgramID, "Ka_uniform");
     g_Ks_uniform         = glGetUniformLocation(g_GpuProgramID, "Ks_uniform");
     g_q_uniform          = glGetUniformLocation(g_GpuProgramID, "q_uniform");
+
+    // Vinculamos os samplers de textura às unidades de textura corretas
+    glUseProgram(g_GpuProgramID);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUseProgram(0);
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
