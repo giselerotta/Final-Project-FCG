@@ -10,9 +10,10 @@ set(SOURCES
   src/textrendering.cpp
   src/tiny_obj_loader.cpp
   src/glad.c
+  src/stb_image.cpp
 )
 
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 4.0.0)
 
 project(LAB_FCG VERSION 1.0.0)
 
