@@ -19,9 +19,10 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define BUNNY 0
+#define CHARACTER 0
 #define SKYBOX 1
-#define CHARACTER 2
+#define TARGET 2
+#define ARCHER 3
 
 uniform int object_id;
 
@@ -43,6 +44,13 @@ uniform sampler2D TextureImage6;
 uniform sampler2D TextureImage7;
 uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
+uniform sampler2D TextureImage10;
+uniform sampler2D TextureImage11;
+uniform sampler2D TextureImage12;
+uniform sampler2D TextureImage13;
+uniform sampler2D TextureImage14;
+uniform sampler2D TextureImage15;
+uniform sampler2D TextureImage16;
 
 uniform vec3 Kd_uniform;
 uniform vec3 Ka_uniform;
@@ -98,16 +106,43 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
-    if ( object_id == BUNNY )
+    if ( object_id == CHARACTER )
     {
-        // PREENCHA AQUI
-        // Propriedades espectrais do coelho
         Kd = vec3(0.08, 0.4, 0.8);
         Ks = vec3(0.8, 0.8, 0.8);
         Ka = vec3(0.04,0.2,0.4);
         q = 32.0;
+        // // Usa as propriedades do material MTL via uniformes e combina com textura se disponível
+        // vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0); // Cor padrão branca
+        // 
+        // // Seleciona a textura baseada no material_id
+        // if (material_id == 0) {
+        //     texcolor = texture(TextureImage10, texcoords); // Eye texture
+        // } else if (material_id == 1) {
+        //     texcolor = texture(TextureImage16, texcoords); // Hair texture
+        // } else if (material_id == 2) {
+        //     texcolor = texture(TextureImage14, texcoords); // Body texture
+        // } else if (material_id == 3) {
+        //     texcolor = texture(TextureImage11, texcoords); // T-shirt texture
+        // } else if (material_id == 4) {
+        //     texcolor = texture(TextureImage12, texcoords); // Belt texture
+        // } else if (material_id == 5) {
+        //     texcolor = texture(TextureImage13, texcoords); // Archer texture
+        // } else if (material_id == 6) {
+        //     texcolor = texture(TextureImage15, texcoords); // Material texture
+        // } else if (material_id == 7) {
+        //     texcolor = texture(TextureImage14, texcoords); // Body texture (repeated)
+        // } else if (material_id == 8) {
+        //     texcolor = texture(TextureImage10, texcoords); // Eye texture (repeated)
+        // }
+        // 
+        // // Combina a textura com as propriedades do material
+        // Kd = texcolor.rgb * Kd_uniform;
+        // Ka = Ka_uniform;
+        // Ks = Ks_uniform;
+        // q = q_uniform;
     }
-    else if (object_id == CHARACTER)
+    else if (object_id == TARGET)
     {
         // Usa as propriedades do material MTL via uniformes
         Kd = Kd_uniform;
@@ -129,6 +164,39 @@ void main()
             texcolor = texture(TextureImage6, texcoords); // target-paper (repetido)
         } else if (material_id == 5) {
             texcolor = texture(TextureImage8, texcoords); // Styrofoam (repetido)
+        }
+        
+        // Mistura a textura com as propriedades do material
+        Kd = Kd * texcolor.rgb;
+    }
+    else if (object_id == ARCHER)
+    {
+        // Usa as propriedades do material MTL via uniformes
+        Kd = Kd_uniform;
+        Ka = Ka_uniform;
+        Ks = Ks_uniform;
+        q = q_uniform;
+        
+        // Aplica textura baseada no material ID com mapeamento mais lógico
+        vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
+        if (material_id == 0) {
+            texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo
+        } else if (material_id == 1) {
+            texcolor = texture(TextureImage10, texcoords); // Eye_diff - Olhos
+        } else if (material_id == 2) {
+            texcolor = texture(TextureImage16, texcoords); // Hair_DIff - Cabelo
+        } else if (material_id == 3) {
+            texcolor = texture(TextureImage12, texcoords); // TSHIRT_2 - Camisa
+        } else if (material_id == 4) {
+            texcolor = texture(TextureImage11, texcoords); // BELT_4 - Cinto
+        } else if (material_id == 5) {
+            texcolor = texture(TextureImage13, texcoords); // ARCHER_012 - Armadura
+        } else if (material_id == 6) {
+            texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico
+        } else if (material_id == 7) {
+            texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo (repetido)
+        } else if (material_id == 8) {
+            texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico (repetido)
         }
         
         // Mistura a textura com as propriedades do material

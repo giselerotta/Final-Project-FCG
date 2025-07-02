@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 578917 - Gisele Cervo Rotta", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Arco e Flecha", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -320,24 +320,35 @@ int main(int argc, char* argv[])
     LoadTextureImage("data/textures/top.png");        // TextureImage3
     LoadTextureImage("data/textures/front.png");      // TextureImage4
     LoadTextureImage("data/textures/back.png");       // TextureImage5
-
     // Texturas do modelo target
-    LoadTextureImage("data/target/RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg");    // TextureImage6
-    LoadTextureImage("data/target/RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg");  // TextureImage7
-    LoadTextureImage("data/target/RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg");    // TextureImage8
+    LoadTextureImage("data/target/RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg");        // TextureImage6
+    LoadTextureImage("data/target/RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg");     // TextureImage7
+    LoadTextureImage("data/target/RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg");       // TextureImage8
     LoadTextureImage("data/target/RGB_da371e9e3c3d460c986fe6316c40bc6c_Wood_stand_Diffuse_final.jpeg"); // TextureImage9
 
-    ObjModel bunnymodel("data/bunny.obj");
-    ComputeNormals(&bunnymodel);
-    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    LoadTextureImage("data/character/RGB_1b6e32c5408a4a13ad1d8f411749c0e4_Eye_diff_001.png");                                // TextureImage10
+    LoadTextureImage("data/character/RGB_6f1df117890d4d80893d2170dc81c4b3_ARCHER_FOR_SUBS_TSHIRT_2_BaseColor.1001.jpeg");    // TextureImage11
+    LoadTextureImage("data/character/RGB_6f3d0106dc4540efb1e0628732bba968_ARCHER_FOR_SUBS_BELT_4_BaseColor.1001.jpeg");      // TextureImage12
+    LoadTextureImage("data/character/RGB_694fa89b46224c7ab2192f701793093c_ARCHER_FOR_SUBS_ARCHER_012_BaseColor.1001.jpeg");  // TextureImage13
+    LoadTextureImage("data/character/RGB_4886c183ab0b499793b6a5b448ef285d_WARRIOR_Body_new_low_001_defaultMat_BaseCo.jpeg"); // TextureImage14
+    LoadTextureImage("data/character/RGB_b4890e0bef3e4568a4bd860662769c4e_ARCHER_FOR_SUBS_Material.001_BaseColor.100.jpeg"); // TextureImage15
+    LoadTextureImage("data/character/RGB_e40db1c3e31f4d2a92b06d9a0bae4a48_Hair_DIff_01.jpeg");                               // TextureImage16
+    
+    ObjModel charactermodel("data/male_mesh.obj");
+    ComputeNormals(&charactermodel);
+    BuildTrianglesAndAddToVirtualScene(&charactermodel);
 
-    ObjModel characatermodel("data/target/model.obj");
-    ComputeNormals(&characatermodel);
-    BuildTrianglesAndAddToVirtualScene(&characatermodel);
+    ObjModel targetmodel("data/target/model.obj");
+    ComputeNormals(&targetmodel);
+    BuildTrianglesAndAddToVirtualScene(&targetmodel);
 
     ObjModel skyboxmodel("data/skybox.obj");
     ComputeNormals(&skyboxmodel);
     BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
+
+    ObjModel archermodel("data/character/model.obj");
+    ComputeNormals(&archermodel);
+    BuildTrianglesAndAddToVirtualScene(&archermodel);
 
     if ( argc > 1 )
     {
@@ -474,36 +485,68 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define BUNNY 0
+        #define CHARACTER 0
         #define SKYBOX 1
-        #define CHARACTER 2
+        #define TARGET 2
+        #define ARCHER 3
 
         model = Matrix_Translate(pos_x, pos_y - 5.0f,pos_z) 
         * Matrix_Scale(0.1f, 0.1f, 0.1f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-
+        glUniform1i(g_object_id_uniform, CHARACTER);
         
         // Desenhamos o modelo do coelho
         if(look_at){
-            DrawVirtualObject("the_bunny");
+            DrawVirtualObject("Base_Male");
         }
 
+        model = Matrix_Translate(0, -20.0f,0) 
+        * Matrix_Scale(0.1f, 0.1f, 0.1f);
+        
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, ARCHER);
+
+        DrawVirtualObjectWithMaterial("object_0", &archermodel.materials[0]);
+        DrawVirtualObjectWithMaterial("object_1", &archermodel.materials[1]);
+        DrawVirtualObjectWithMaterial("object_2", &archermodel.materials[2]);
+        DrawVirtualObjectWithMaterial("object_3", &archermodel.materials[3]);
+        DrawVirtualObjectWithMaterial("object_4", &archermodel.materials[4]);
+        DrawVirtualObjectWithMaterial("object_5", &archermodel.materials[5]);
+        DrawVirtualObjectWithMaterial("object_6", &archermodel.materials[6]);
+        DrawVirtualObjectWithMaterial("object_7", &archermodel.materials[7]);
+        DrawVirtualObjectWithMaterial("object_8", &archermodel.materials[8]);
+
         model =
-         Matrix_Translate(0, -15.0f,0)
+        Matrix_Translate(0, -15.0f,0)
         *  Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, CHARACTER);
+        glUniform1i(g_object_id_uniform, TARGET);
         
-        DrawVirtualObjectWithMaterial("object_0", &characatermodel.materials[0]);
-        DrawVirtualObjectWithMaterial("object_1", &characatermodel.materials[1]);
-        DrawVirtualObjectWithMaterial("object_2", &characatermodel.materials[2]);
-        DrawVirtualObjectWithMaterial("object_3", &characatermodel.materials[3]);
-        DrawVirtualObjectWithMaterial("object_4", &characatermodel.materials[4]);
-        DrawVirtualObjectWithMaterial("object_5", &characatermodel.materials[5]);
+        DrawVirtualObjectWithMaterial("object_0_target", &targetmodel.materials[0]);
+        DrawVirtualObjectWithMaterial("object_1_target", &targetmodel.materials[1]);
+        DrawVirtualObjectWithMaterial("object_2_target", &targetmodel.materials[2]);
+        DrawVirtualObjectWithMaterial("object_3_target", &targetmodel.materials[3]);
+        DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
+        DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
+
+        model = Matrix_Translate(10, -15.0f, 10)
+        * Matrix_Rotate_X(3*M_PI/2)
+        * Matrix_Rotate_Z(3*M_PI/2)
+        * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, TARGET);
+
+        DrawVirtualObjectWithMaterial("object_0_target", &targetmodel.materials[0]);
+        DrawVirtualObjectWithMaterial("object_1_target", &targetmodel.materials[1]);
+        DrawVirtualObjectWithMaterial("object_2_target", &targetmodel.materials[2]);
+        DrawVirtualObjectWithMaterial("object_3_target", &targetmodel.materials[3]);
+        DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
+        DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
+        
         //glCullFace(GL_FRONT);
         glUniform1i(g_object_id_uniform, SKYBOX);
         model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
@@ -694,6 +737,14 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage12"), 12);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage13"), 13);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage14"), 14);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage15"), 15);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage16"), 16);
     glUseProgram(0);
 }
 
