@@ -118,6 +118,7 @@ void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso n�
 void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
 void LoadTextureImage(const char* filename); // Função que carrega imagens de textura
 void DrawVirtualObject(const char* object_name); // Desenha um objeto armazenado em g_VirtualScene
+void DrawVirtualObjectWithMaterial(const char* object_name, const tinyobj::material_t* material); // Desenha um objeto com material específico
 GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
 GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
@@ -152,6 +153,8 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+void ApplyMaterial(const tinyobj::material_t& material);
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -161,6 +164,7 @@ struct SceneObject
     size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
     GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
+    int          material_id; // ID do material associado ao objeto (-1 se não tiver material)
 };
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
@@ -170,6 +174,9 @@ struct SceneObject
 // objetos dentro da variável g_VirtualScene, e veja na função main() como
 // estes são acessados.
 std::map<std::string, SceneObject> g_VirtualScene;
+
+// Mapa para armazenar os modelos carregados e acessar seus materiais
+std::map<std::string, ObjModel*> g_LoadedModels;
 
 // Pilha que guardará as matrizes de modelagem.
 std::stack<glm::mat4>  g_MatrixStack;
@@ -225,6 +232,11 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+GLint g_material_id_uniform;
+GLint g_Kd_uniform;
+GLint g_Ka_uniform;
+GLint g_Ks_uniform;
+GLint g_q_uniform;
 
 GLuint g_NumLoadedTextures = 0;
 
@@ -302,23 +314,28 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Imagens da SkyBox
-    LoadTextureImage("../../data/textures/right.png");        // TextureImage0
-    LoadTextureImage("../../data/textures/left.png");       // TextureImage1
-    LoadTextureImage("../../data/textures/top.png");        // TextureImage2
-    LoadTextureImage("../../data/textures/bottom.png");       // TextureImage3
-    LoadTextureImage("../../data/textures/front.png");      // TextureImage4
-    LoadTextureImage("../../data/textures/back.png");         // TextureImage5
+    LoadTextureImage("data/textures/right.png");        // TextureImage0
+    LoadTextureImage("data/textures/left.png");       // TextureImage1
+    LoadTextureImage("data/textures/top.png");        // TextureImage2
+    LoadTextureImage("data/textures/bottom.png");       // TextureImage3
+    LoadTextureImage("data/textures/front.png");      // TextureImage4
+    LoadTextureImage("data/textures/back.png");         // TextureImage5
 
-    ObjModel bunnymodel("../../data/bunny.obj");
+    // Texturas do modelo target
+    LoadTextureImage("data/target/RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg");  // TextureImage6
+    LoadTextureImage("data/target/RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg");    // TextureImage7
+    LoadTextureImage("data/target/RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg");    // TextureImage8
+    LoadTextureImage("data/target/RGB_da371e9e3c3d460c986fe6316c40bc6c_Wood_stand_Diffuse_final.jpeg"); // TextureImage9
+
+    ObjModel bunnymodel("data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
 
-    ObjModel characatermodel("../../data/character/model.obj");
+    ObjModel characatermodel("data/target/model.obj");
     ComputeNormals(&characatermodel);
     BuildTrianglesAndAddToVirtualScene(&characatermodel);
-    PrintObjModelInfo(&characatermodel);
 
-    ObjModel skyboxmodel("../../data/skybox.obj");
+    ObjModel skyboxmodel("data/skybox.obj");
     ComputeNormals(&skyboxmodel);
     BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
 
@@ -461,21 +478,32 @@ int main(int argc, char* argv[])
         #define SKYBOX 1
         #define CHARACTER 2
 
-        model = Matrix_Translate(pos_x,pos_y - 5.0f,pos_z) 
+        model = Matrix_Translate(pos_x, pos_y - 5.0f,pos_z) 
         * Matrix_Scale(0.1f, 0.1f, 0.1f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
 
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, CHARACTER);
         
         // Desenhamos o modelo do coelho
         if(look_at){
-            // DrawVirtualObject("the_bunny");
-            DrawVirtualObject("Base_Male");
+            DrawVirtualObject("the_bunny");
         }
 
+        model =
+         Matrix_Translate(0, -15.0f,0)
+        *  Matrix_Rotate_X(3*M_PI/2)
+        * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CHARACTER);
+        
+        DrawVirtualObjectWithMaterial("object_0", &characatermodel.materials[0]);
+        DrawVirtualObjectWithMaterial("object_1", &characatermodel.materials[1]);
+        DrawVirtualObjectWithMaterial("object_2", &characatermodel.materials[2]);
+        DrawVirtualObjectWithMaterial("object_3", &characatermodel.materials[3]);
+        DrawVirtualObjectWithMaterial("object_4", &characatermodel.materials[4]);
+        DrawVirtualObjectWithMaterial("object_5", &characatermodel.materials[5]);
         //glCullFace(GL_FRONT);
         glUniform1i(g_object_id_uniform, SKYBOX);
         model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
@@ -572,6 +600,20 @@ void LoadTextureImage(const char* filename)
 // dos objetos na função BuildTrianglesAndAddToVirtualScene().
 void DrawVirtualObject(const char* object_name)
 {
+    // Verifica se o objeto tem material associado e o aplica
+    const SceneObject& obj = g_VirtualScene[object_name];
+    if (obj.material_id >= 0 && g_LoadedModels.count(object_name) > 0) {
+        const ObjModel* model = g_LoadedModels[object_name];
+        if (obj.material_id < (int)model->materials.size()) {
+            ApplyMaterial(model->materials[obj.material_id]);
+            // Define o ID do material no shader
+            glUniform1i(g_material_id_uniform, obj.material_id);
+        }
+    } else {
+        // Define material_id como -1 se não houver material
+        glUniform1i(g_material_id_uniform, -1);
+    }
+
     // "Ligamos" o VAO. Informamos que queremos utilizar os atributos de
     // vértices apontados pelo VAO criado pela função BuildTrianglesAndAddToVirtualScene(). Veja
     // comentários detalhados dentro da definição de BuildTrianglesAndAddToVirtualScene().
@@ -617,8 +659,8 @@ void LoadShadersFromFiles()
     //       |
     //       o-- shader_fragment.glsl
     //
-    GLuint vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
-    GLuint fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
+    GLuint vertex_shader_id = LoadShader_Vertex("src/shader_vertex.glsl");
+    GLuint fragment_shader_id = LoadShader_Fragment("src/shader_fragment.glsl");
 
     // Deletamos o programa de GPU anterior, caso ele exista.
     if ( g_GpuProgramID != 0 )
@@ -634,6 +676,11 @@ void LoadShadersFromFiles()
     g_view_uniform       = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+    g_material_id_uniform = glGetUniformLocation(g_GpuProgramID, "material_id"); // Variável "material_id" em shader_fragment.glsl
+    g_Kd_uniform         = glGetUniformLocation(g_GpuProgramID, "Kd_uniform"); // Propriedades do material
+    g_Ka_uniform         = glGetUniformLocation(g_GpuProgramID, "Ka_uniform");
+    g_Ks_uniform         = glGetUniformLocation(g_GpuProgramID, "Ks_uniform");
+    g_q_uniform          = glGetUniformLocation(g_GpuProgramID, "q_uniform");
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
@@ -740,6 +787,13 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         size_t first_index = indices.size();
         size_t num_triangles = model->shapes[shape].mesh.num_face_vertices.size();
 
+        // Problema iminente
+        // Verifica se há material associado à primeira face para usar como padrão do shape
+        int shape_material_id = -1;
+        if (!model->shapes[shape].mesh.material_ids.empty()) {
+            shape_material_id = model->shapes[shape].mesh.material_ids[0];
+        }
+
         for (size_t triangle = 0; triangle < num_triangles; ++triangle)
         {
             assert(model->shapes[shape].mesh.num_face_vertices[triangle] == 3);
@@ -793,8 +847,14 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         theobject.num_indices    = last_index - first_index + 1; // Número de indices
         theobject.rendering_mode = GL_TRIANGLES;       // Índices correspondem ao tipo de rasterização GL_TRIANGLES.
         theobject.vertex_array_object_id = vertex_array_object_id;
+        // Problema iminente
+        theobject.material_id    = shape_material_id; // ID do material associado
 
         g_VirtualScene[model->shapes[shape].name] = theobject;
+        
+        // Problema iminente
+        // Armazena o modelo para acessar materiais posteriormente
+        g_LoadedModels[model->shapes[shape].name] = model;
     }
 
     GLuint VBO_model_coefficients_id;
@@ -1317,6 +1377,38 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             pos_z = pos_z - 0.1;
     }
 
+}
+
+// Função para aplicar as propriedades do material
+void ApplyMaterial(const tinyobj::material_t& material)
+{
+    // LoadTextureImage();
+    // Aplica as propriedades do material via uniformes
+    glUniform3f(g_Kd_uniform, 
+        material.diffuse[0], 
+        material.diffuse[1], 
+        material.diffuse[2]);
+    glUniform3f(g_Ka_uniform, 
+        material.ambient[0], 
+        material.ambient[1], 
+        material.ambient[2]);
+    glUniform3f(g_Ks_uniform, 
+        material.specular[0], 
+        material.specular[1], 
+        material.specular[2]);
+    glUniform1f(g_q_uniform, material.shininess);
+}
+
+// Função que desenha um objeto armazenado em g_VirtualScene com material específico
+void DrawVirtualObjectWithMaterial(const char* object_name, const tinyobj::material_t* material)
+{
+    // Aplica o material se fornecido
+    if (material != nullptr) {
+        ApplyMaterial(*material);
+    }
+    
+    // Desenha o objeto normalmente
+    DrawVirtualObject(object_name);
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal

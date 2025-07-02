@@ -5,6 +5,7 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
+map_Kd RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg
 newmtl object_1
 Ka 0.000000 0.000000 0.000000
 Kd 0.698039 0.698039 0.698039
@@ -12,6 +13,7 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
+map_Kd RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg
 newmtl object_2
 Ka 0.000000 0.000000 0.000000
 Kd 0.698039 0.698039 0.698039
@@ -19,6 +21,7 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
+map_Kd RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg
 newmtl object_3
 Ka 0.000000 0.000000 0.000000
 Kd 0.698039 0.698039 0.698039
@@ -26,6 +29,7 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
+map_Kd RGB_da371e9e3c3d460c986fe6316c40bc6c_Wood_stand_Diffuse_final.jpeg
 newmtl object_4
 Ka 0.000000 0.000000 0.000000
 Kd 0.698039 0.698039 0.698039
@@ -33,6 +37,7 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
+map_Kd RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg
 newmtl object_5
 Ka 0.000000 0.000000 0.000000
 Kd 0.698039 0.698039 0.698039
@@ -40,3 +45,4 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
+map_Kd RGB_ca679fbef29d47908e43abddd6b40c6c_Styrofoam_diffuse.jpeg

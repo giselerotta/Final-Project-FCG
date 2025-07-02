@@ -25,6 +25,9 @@ uniform mat4 projection;
 
 uniform int object_id;
 
+// ID do material do objeto atual
+uniform int material_id;
+
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
 uniform vec4 bbox_min;
 uniform vec4 bbox_max;
@@ -36,6 +39,15 @@ uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
 uniform sampler2D TextureImage5;
+uniform sampler2D TextureImage6;
+uniform sampler2D TextureImage7;
+uniform sampler2D TextureImage8;
+uniform sampler2D TextureImage9;
+
+uniform vec3 Kd_uniform;
+uniform vec3 Ka_uniform;
+uniform vec3 Ks_uniform;
+uniform float q_uniform;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -86,7 +98,7 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
-    if ( object_id == BUNNY || object_id == CHARACTER)
+    if ( object_id == BUNNY )
     {
         // PREENCHA AQUI
         // Propriedades espectrais do coelho
@@ -94,6 +106,33 @@ void main()
         Ks = vec3(0.8, 0.8, 0.8);
         Ka = vec3(0.04,0.2,0.4);
         q = 32.0;
+    }
+    else if (object_id == CHARACTER)
+    {
+        // Usa as propriedades do material MTL via uniformes
+        Kd = Kd_uniform;
+        Ka = Ka_uniform;
+        Ks = Ks_uniform;
+        q = q_uniform;
+        
+        // Aplica textura baseada no material ID
+        vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
+        if (material_id == 0) {
+            texcolor = texture(TextureImage6, texcoords); // target-paper
+        } else if (material_id == 1) {
+            texcolor = texture(TextureImage7, texcoords); // wood_hinge
+        } else if (material_id == 2) {
+            texcolor = texture(TextureImage8, texcoords); // Styrofoam
+        } else if (material_id == 3) {
+            texcolor = texture(TextureImage9, texcoords); // Wood_stand
+        } else if (material_id == 4) {
+            texcolor = texture(TextureImage6, texcoords); // target-paper (repetido)
+        } else if (material_id == 5) {
+            texcolor = texture(TextureImage8, texcoords); // Styrofoam (repetido)
+        }
+        
+        // Mistura a textura com as propriedades do material
+        Kd = Kd * texcolor.rgb;
     }
     else if (object_id == SKYBOX)
     {
