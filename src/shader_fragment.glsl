@@ -97,11 +97,6 @@ void main()
 
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2*n*(dot(n,l)); // PREENCHA AQUI o vetor de reflexão especular ideal
-    
-    vec4 pos = vec4(0.0, 2.0, 1.0, 1.0);
-    vec4 vec = vec4(0.0, -1.0, 0.0, 0.0);
-    float cosb = dot(normalize(p - pos), normalize(vec));
-    float cosa = cos(radians(30.0));
 
     // Parâmetros que definem as propriedades espectrais da superfície
     vec3 Kd; // Refletância difusa

@@ -228,6 +228,9 @@ bool g_UsePerspectiveProjection = true;
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
+// Delta para variação do tempo
+float g_DeltaTime = 0.0f;
+
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
 GLint g_model_uniform;
@@ -418,6 +421,10 @@ int main(int argc, char* argv[])
         // Pedimos para a GPU utilizar o programa de GPU criado acima (contendo
         // os shaders de vértice e fragmentos).
         glUseProgram(g_GpuProgramID);
+
+        float current_time = (float)glfwGetTime();
+        g_DeltaTime = current_time - prev_time;
+        prev_time = current_time;
 
         // Computamos a posição da câmera utilizando coordenadas esféricas.  As
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -1317,7 +1324,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_F && action == GLFW_PRESS)
     {
         look_at = !look_at;
-        printf("teste");
     }
     // Se o usuário pressionar a tecla ESC, fechamos a janela.
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -1380,10 +1386,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
-        std:: cout << "teste F" << std::endl;
         LoadShadersFromFiles();
-        fprintf(stdout,"FFFFF!\n");
-        fflush(stdout);
     }
 
     // MOVIMENTAÇÃO DO BONECO
@@ -1393,14 +1396,14 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     float right_x = cos(g_CameraTheta);
     float right_z = -sin(g_CameraTheta);    
 
-    float speed = 0.1f;
+    float speed = 6.0f;
 
     // Teste se o usuário pressionou a tecla D
     if (key == GLFW_KEY_D)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x += right_x * speed;
-            pos_z += right_z * speed;
+            pos_x += right_x * speed * g_DeltaTime;
+            pos_z += right_z * speed * g_DeltaTime;
         }
     }
 
@@ -1408,8 +1411,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_A)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x -= right_x * speed;
-            pos_z -= right_z * speed;
+            pos_x -= right_x * speed * g_DeltaTime;
+            pos_z -= right_z * speed * g_DeltaTime;
         }
     }
 
@@ -1417,8 +1420,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_S)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x -= forward_x * speed;
-            pos_z -= forward_z * speed;
+            pos_x -= forward_x * speed * g_DeltaTime;
+            pos_z -= forward_z * speed * g_DeltaTime;
         }
     }
 
@@ -1426,8 +1429,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_W)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x += forward_x * speed;
-            pos_z += forward_z * speed;
+            pos_x += forward_x * speed * g_DeltaTime;
+            pos_z += forward_z * speed * g_DeltaTime;
         }
     }
 
