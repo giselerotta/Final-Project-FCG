@@ -48,6 +48,8 @@
 #include "utils.h"
 #include "matrices.h"
 
+#define M_PI 3.14159
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -290,6 +292,8 @@ int main(int argc, char* argv[])
     // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
     glfwMakeContextCurrent(window);
 
+    glfwSwapInterval(1);
+
     // Carregamento de todas funções definidas por OpenGL 3.3, utilizando a
     // biblioteca GLAD.
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
@@ -490,7 +494,8 @@ int main(int argc, char* argv[])
         #define TARGET 2
         #define ARCHER 3
 
-        model = Matrix_Translate(pos_x, pos_y - 5.0f,pos_z) 
+        model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
+        * Matrix_Rotate_Y(g_CameraTheta + M_PI)
         * Matrix_Scale(0.1f, 0.1f, 0.1f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1374,72 +1379,49 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fflush(stdout);
     }
 
-        // Teste se o usuário pressionou a tecla D
+    // MOVIMENTAÇÃO DO BONECO
+    float forward_x = -sin(g_CameraTheta);
+    float forward_z = -cos(g_CameraTheta);
+
+    float right_x = cos(g_CameraTheta);
+    float right_z = -sin(g_CameraTheta);    
+
+    float speed = 0.1f;
+
+    // Teste se o usuário pressionou a tecla D
     if (key == GLFW_KEY_D)
     {
-        if (action == GLFW_REPEAT){
-            // Usuário apertou a tecla D, então atualizamos o estado para pressionada
-            D_pressed = true;
-            pos_x = pos_x + 0.1;
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+            pos_x += right_x * speed;
+            pos_z += right_z * speed;
         }
-
-        else if (action == GLFW_REPEAT)
-            pos_x = pos_x + 0.1;
-            // Usuário está segurando a tecla D e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
     }
 
     // Teste se o usuário pressionou a tecla A
     if (key == GLFW_KEY_A)
     {
-        if (action == GLFW_PRESS){
-            // Usuário apertou a tecla A, então atualizamos o estado para pressionada
-            A_pressed = true;
-            pos_x = pos_x - 0.1;
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+            pos_x -= right_x * speed;
+            pos_z -= right_z * speed;
         }
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla A e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            pos_x = pos_x - 0.1;
     }
 
     // Teste se o usuário pressionou a tecla S
     if (key == GLFW_KEY_S)
     {
-        if (action == GLFW_PRESS){
-            // Usuário apertou a tecla S, então atualizamos o estado para pressionada
-            S_pressed = true;
-            pos_z = pos_z + 0.1;
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+            pos_x -= forward_x * speed;
+            pos_z -= forward_z * speed;
         }
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla S e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            pos_z = pos_z + 0.1;
     }
 
     // Teste se o usuário pressionou a tecla W
     if (key == GLFW_KEY_W)
     {
-        if (action == GLFW_PRESS){
-            // Usuário apertou a tecla W, então atualizamos o estado para pressionada
-            W_pressed = true;
-            pos_z = pos_z - 0.1;
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+            pos_x += forward_x * speed;
+            pos_z += forward_z * speed;
         }
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla W e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            pos_z = pos_z - 0.1;
     }
 
 }
