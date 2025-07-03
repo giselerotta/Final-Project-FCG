@@ -235,6 +235,7 @@ GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
 GLint g_material_id_uniform;
+GLint g_lighting_model_uniform;
 GLint g_Kd_uniform;
 GLint g_Ka_uniform;
 GLint g_Ks_uniform;
@@ -500,6 +501,7 @@ int main(int argc, char* argv[])
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHARACTER);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para CHARACTER
         
         // Desenhamos o modelo do coelho
         if(look_at){
@@ -511,6 +513,7 @@ int main(int argc, char* argv[])
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ARCHER);
+        glUniform1i(g_lighting_model_uniform, 1); // Gouraud para ARCHER
 
         DrawVirtualObjectWithMaterial("object_0", &archermodel.materials[0]);
         DrawVirtualObjectWithMaterial("object_1", &archermodel.materials[1]);
@@ -529,6 +532,7 @@ int main(int argc, char* argv[])
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
         
         DrawVirtualObjectWithMaterial("object_0_target", &targetmodel.materials[0]);
         DrawVirtualObjectWithMaterial("object_1_target", &targetmodel.materials[1]);
@@ -544,6 +548,7 @@ int main(int argc, char* argv[])
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
 
         DrawVirtualObjectWithMaterial("object_0_target", &targetmodel.materials[0]);
         DrawVirtualObjectWithMaterial("object_1_target", &targetmodel.materials[1]);
@@ -554,6 +559,7 @@ int main(int argc, char* argv[])
         
         //glCullFace(GL_FRONT);
         glUniform1i(g_object_id_uniform, SKYBOX);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para SKYBOX (não importa muito)
         model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         DrawVirtualObject("skybox");
@@ -725,6 +731,7 @@ void LoadShadersFromFiles()
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_material_id_uniform = glGetUniformLocation(g_GpuProgramID, "material_id"); // Variável "material_id" em shader_fragment.glsl
+    g_lighting_model_uniform = glGetUniformLocation(g_GpuProgramID, "lighting_model"); // Modelo de iluminação
     g_Kd_uniform         = glGetUniformLocation(g_GpuProgramID, "Kd_uniform"); // Propriedades do material
     g_Ka_uniform         = glGetUniformLocation(g_GpuProgramID, "Ka_uniform");
     g_Ks_uniform         = glGetUniformLocation(g_GpuProgramID, "Ks_uniform");

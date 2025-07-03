@@ -13,6 +13,9 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+// Cor calculada no vertex shader para Gouraud
+in vec3 gouraud_color;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -28,6 +31,9 @@ uniform int object_id;
 
 // ID do material do objeto atual
 uniform int material_id;
+
+// Modelo de iluminação: 0 = Phong, 1 = Gouraud
+uniform int lighting_model;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
 uniform vec4 bbox_min;
@@ -272,10 +278,42 @@ void main()
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso,
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-    if (cosb >= cosa)
-        color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
-    else 
-        color.rgb = ambient_term;
+    
+    if (lighting_model == 1) {
+        // Modelo Gouraud: usa a cor interpolada do vertex shader
+        // Aplica texturas se disponível
+        vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
+        
+        if (object_id == ARCHER) {
+            // Aplica textura baseada no material ID
+            if (material_id == 0) {
+                texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo
+            } else if (material_id == 1) {
+                texcolor = texture(TextureImage10, texcoords); // Eye_diff - Olhos
+            } else if (material_id == 2) {
+                texcolor = texture(TextureImage16, texcoords); // Hair_DIff - Cabelo
+            } else if (material_id == 3) {
+                texcolor = texture(TextureImage12, texcoords); // TSHIRT_2 - Camisa
+            } else if (material_id == 4) {
+                texcolor = texture(TextureImage11, texcoords); // BELT_4 - Cinto
+            } else if (material_id == 5) {
+                texcolor = texture(TextureImage13, texcoords); // ARCHER_012 - Armadura
+            } else if (material_id == 6) {
+                texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico
+            } else if (material_id == 7) {
+                texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo (repetido)
+            } else if (material_id == 8) {
+                texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico (repetido)
+            }
+        }
+        
+        color.rgb = gouraud_color * texcolor.rgb;
+    } else {
+        // Modelo Phong: calcula iluminação no fragment shader
+        color.rgb = lambert_diffuse_term;
+        //color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+        //color.rgb =  ambient_term;
+    }
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas

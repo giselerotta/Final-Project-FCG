@@ -11,6 +11,15 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+// Modelo de iluminação: 0 = Phong, 1 = Gouraud
+uniform int lighting_model;
+
+// Propriedades do material para Gouraud
+uniform vec3 Kd_uniform;
+uniform vec3 Ka_uniform;
+uniform vec3 Ks_uniform;
+uniform float q_uniform;
+
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
 // para cada fragmento, os quais serão recebidos como entrada pelo Fragment
@@ -19,6 +28,9 @@ out vec4 position_world;
 out vec4 normal;
 
 out vec2 texcoords;
+
+// Cor calculada no vertex shader para Gouraud
+out vec3 gouraud_color;
 
 void main()
 {
@@ -59,5 +71,39 @@ void main()
     normal.w = 0.0;
 
     texcoords = texture_coefficients;
+
+    // Calcula iluminação Gouraud no vertex shader se necessário
+    if (lighting_model == 1) {
+        // Obtemos a posição da câmera
+        vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+        vec4 camera_position = inverse(view) * origin;
+
+        // Vetores para iluminação
+        vec4 p = position_world;
+        vec4 n = normalize(normal);
+        vec4 l = normalize(vec4(1.0, 1.0, 0.5, 0.0));
+        vec4 v = normalize(camera_position - p);
+        vec4 r = -l + 2*n*(dot(n,l));
+
+        // Propriedades do material
+        vec3 Kd = Kd_uniform;
+        vec3 Ka = Ka_uniform;
+        vec3 Ks = Ks_uniform;
+        float q = q_uniform;
+
+        // Espectros de luz
+        vec3 I = vec3(1.0, 1.0, 1.0);
+        vec3 Ia = vec3(0.2, 0.2, 0.2);
+
+        // Termos de iluminação
+        vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l));
+        vec3 ambient_term = Ka * Ia;
+        vec3 phong_specular_term = Ks * I * pow(max(0, dot(r, v)), q);
+
+        gouraud_color = lambert_diffuse_term + ambient_term + phong_specular_term;
+    } 
+    else {
+        gouraud_color = vec3(1.0, 1.0, 1.0); // Cor padrão para Phong
+    }
 }
 
