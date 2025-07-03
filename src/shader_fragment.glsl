@@ -89,7 +89,8 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
+    // luz mais frontal e alta para reduzir sombras
+    vec4 l = normalize(vec4(0.2,1.0,1.0,0.0));
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -112,6 +113,7 @@ void main()
     float U = 0.0;
     float V = 0.0;
 
+    vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0); // Cor padrão branca
     if ( object_id == CHARACTER )
     {
         Kd = vec3(0.08, 0.4, 0.8);
@@ -119,7 +121,6 @@ void main()
         Ka = vec3(0.04,0.2,0.4);
         q = 32.0;
         // // Usa as propriedades do material MTL via uniformes e combina com textura se disponível
-        // vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0); // Cor padrão branca
         // 
         // // Seleciona a textura baseada no material_id
         // if (material_id == 0) {
@@ -157,7 +158,7 @@ void main()
         q = q_uniform;
         
         // Aplica textura baseada no material ID
-        vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
+        //vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
         if (material_id == 0) {
             texcolor = texture(TextureImage6, texcoords); // target-paper
         } else if (material_id == 1) {
@@ -184,7 +185,7 @@ void main()
         q = q_uniform;
         
         // Aplica textura baseada no material ID com mapeamento mais lógico
-        vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
+        //vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
         if (material_id == 0) {
             texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo
         } else if (material_id == 1) {
@@ -210,7 +211,7 @@ void main()
     }
     else if (object_id == SKYBOX)
     {
-        vec4 texcolor;
+        //vec4 texcolor;
 
         // A normal deve estar perfeitamente alinhada com um dos eixos
         if (abs(n.x) > 0.99) {
@@ -250,11 +251,11 @@ void main()
     // Espectro da fonte de iluminação
     vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
 
-    // Espectro da luz ambiente
-    vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+    // Espectro da luz ambiente (aumentada para reduzir sombras)
+    vec3 Ia = vec3(0.4,0.4,0.4); // PREENCHA AQUI o espectro da luz ambiente
 
     // Termo difuso utilizando a lei dos cossenos de Lambert
-    vec3 lambert_diffuse_term = Kd*I*max(0,dot(n,l)); // PREENCHA AQUI o termo difuso de Lambert
+    vec3 lambert_diffuse_term = Kd*I*max(0.3,dot(n,l)); // PREENCHA AQUI o termo difuso de Lambert
 
     // Termo ambiente
     vec3 ambient_term = Ka*Ia; // PREENCHA AQUI o termo ambiente
@@ -282,37 +283,12 @@ void main()
     if (lighting_model == 1) {
         // Modelo Gouraud: usa a cor interpolada do vertex shader
         // Aplica texturas se disponível
-        vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
-        
-        if (object_id == ARCHER) {
-            // Aplica textura baseada no material ID
-            if (material_id == 0) {
-                texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo
-            } else if (material_id == 1) {
-                texcolor = texture(TextureImage10, texcoords); // Eye_diff - Olhos
-            } else if (material_id == 2) {
-                texcolor = texture(TextureImage16, texcoords); // Hair_DIff - Cabelo
-            } else if (material_id == 3) {
-                texcolor = texture(TextureImage12, texcoords); // TSHIRT_2 - Camisa
-            } else if (material_id == 4) {
-                texcolor = texture(TextureImage11, texcoords); // BELT_4 - Cinto
-            } else if (material_id == 5) {
-                texcolor = texture(TextureImage13, texcoords); // ARCHER_012 - Armadura
-            } else if (material_id == 6) {
-                texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico
-            } else if (material_id == 7) {
-                texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo (repetido)
-            } else if (material_id == 8) {
-                texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico (repetido)
-            }
-        }
         
         color.rgb = gouraud_color * texcolor.rgb;
     } else {
         // Modelo Phong: calcula iluminação no fragment shader
+
         color.rgb = lambert_diffuse_term;
-        //color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
-        //color.rgb =  ambient_term;
     }
 
     // Cor final com correção gamma, considerando monitor sRGB.

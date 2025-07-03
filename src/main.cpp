@@ -48,7 +48,7 @@
 #include "utils.h"
 #include "matrices.h"
 
-#define M_PI 3.14159
+#define M_PI 3.14159265358979323846
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .

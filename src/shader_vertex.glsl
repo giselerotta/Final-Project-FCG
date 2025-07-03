@@ -81,7 +81,7 @@ void main()
         // Vetores para iluminação
         vec4 p = position_world;
         vec4 n = normalize(normal);
-        vec4 l = normalize(vec4(1.0, 1.0, 0.5, 0.0));
+        vec4 l = normalize(vec4(0.2, 1.0, 1.0, 0.0));
         vec4 v = normalize(camera_position - p);
         vec4 r = -l + 2*n*(dot(n,l));
 
@@ -93,10 +93,10 @@ void main()
 
         // Espectros de luz
         vec3 I = vec3(1.0, 1.0, 1.0);
-        vec3 Ia = vec3(0.2, 0.2, 0.2);
+        vec3 Ia = vec3(0.4, 0.4, 0.4);
 
         // Termos de iluminação
-        vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l));
+        vec3 lambert_diffuse_term = Kd * I * max(0.3, dot(n, l));
         vec3 ambient_term = Ka * Ia;
         vec3 phong_specular_term = Ks * I * pow(max(0, dot(r, v)), q);
 
