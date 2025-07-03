@@ -23,7 +23,12 @@ uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define CHARACTER 0
-#define SKYBOX 1
+#define PLANE_LEFT 11
+#define PLANE_RIGHT 12
+#define PLANE_BOTTOM 13
+#define PLANE_TOP 14
+#define PLANE_FRONT 15
+#define PLANE_BACK 16
 #define TARGET 2
 #define ARCHER 3
 
@@ -176,28 +181,35 @@ void main()
         // Mistura a textura com as propriedades do material
         Kd = Kd * texcolor.rgb;
     }
-    else if (object_id == SKYBOX)
+    else if (
+        object_id == PLANE_LEFT  || object_id == PLANE_RIGHT ||
+        object_id == PLANE_TOP   || object_id == PLANE_BOTTOM ||
+        object_id == PLANE_FRONT || object_id == PLANE_BACK )
     {
-        //vec4 texcolor;
-
-        // A normal deve estar perfeitamente alinhada com um dos eixos
-        if (abs(n.x) > 0.99) {
-            if (n.x > 0.0)
-                texcolor = texture(TextureImage0, texcoords); // Right
-            else
-                texcolor = texture(TextureImage1, texcoords); // Left
+        vec2 uv;
+        if (object_id == PLANE_LEFT) {
+            uv = vec2(1.0 - texcoords.y, texcoords.x);
+            texcolor = texture(TextureImage0, uv);
         }
-        else if (abs(n.y) > 0.99) {
-            if (n.y > 0.0)
-                texcolor = texture(TextureImage2, texcoords); // Top
-            else
-                texcolor = texture(TextureImage3, texcoords); // Bottom
+        else if (object_id == PLANE_RIGHT) {
+            uv = vec2(texcoords.y, 1.0 - texcoords.x);
+            texcolor = texture(TextureImage1, uv);
         }
-        else if (abs(n.z) > 0.99) {
-            if (n.z > 0.0)
-                texcolor = texture(TextureImage4, texcoords); // Front
-            else
-                texcolor = texture(TextureImage5, texcoords); // Back
+        else if (object_id == PLANE_BOTTOM) {
+            uv = vec2(texcoords.x, 1.0 - texcoords.y);
+            texcolor = texture(TextureImage2, uv);
+        }
+        else if (object_id == PLANE_TOP) {
+            uv = vec2(texcoords.x, texcoords.y);
+            texcolor = texture(TextureImage3, uv);
+        }
+        else if (object_id == PLANE_FRONT) {
+            uv = vec2(texcoords.x, texcoords.y);
+            texcolor = texture(TextureImage4, uv);
+        }
+        else if (object_id == PLANE_BACK) {
+            uv = vec2(1.0 - texcoords.x, 1.0 - texcoords.y);
+            texcolor = texture(TextureImage5, uv);
         }
 
         color.rgb = texcolor.rgb;
@@ -206,6 +218,9 @@ void main()
         // Correção gamma (opcional)
         color.rgb = pow(color.rgb, vec3(1.0/2.2));
         return;
+
+        //color.rgb = pow(color.rgb, vec3(1.0/2.2)); // Gamma correction
+        //Kd = vec3(0.0); Ks = vec3(0.0); Ka = vec3(0.0); q = 1.0;
     }
     else // Objeto desconhecido = preto
     {

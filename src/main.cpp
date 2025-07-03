@@ -350,9 +350,9 @@ int main(int argc, char* argv[])
     ComputeNormals(&targetmodel);
     BuildTrianglesAndAddToVirtualScene(&targetmodel);
 
-    ObjModel skyboxmodel("data/skybox.obj");
-    ComputeNormals(&skyboxmodel);
-    BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
+    ObjModel planemodel("data/plane.obj");
+    ComputeNormals(&planemodel);
+    BuildTrianglesAndAddToVirtualScene(&planemodel);
 
     ObjModel archermodel("data/character/model.obj");
     ComputeNormals(&archermodel);
@@ -498,7 +498,12 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define CHARACTER 0
-        #define SKYBOX 1
+        #define PLANE_LEFT 11
+        #define PLANE_RIGHT 12
+        #define PLANE_BOTTOM 13
+        #define PLANE_TOP 14
+        #define PLANE_FRONT 15
+        #define PLANE_BACK 16
         #define TARGET 2
         #define ARCHER 3
 
@@ -515,8 +520,8 @@ int main(int argc, char* argv[])
             DrawVirtualObject("Base_Male");
         }
 
-        model = Matrix_Translate(0, -20.0f,0) 
-        * Matrix_Scale(0.1f, 0.1f, 0.1f);
+        model = Matrix_Translate(0, -23.0f, 0) 
+        * Matrix_Scale(0.08f, 0.08f, 0.08f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ARCHER);
@@ -533,7 +538,7 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_8", &archermodel.materials[8]);
 
         model =
-        Matrix_Translate(0, -15.0f,0)
+        Matrix_Translate(0, -23.0f, -15.0f)
         *  Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
         
@@ -548,7 +553,7 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
-        model = Matrix_Translate(10, -15.0f, 10)
+        model = Matrix_Translate(10, -23.0f, 10)
         * Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Rotate_Z(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
@@ -563,13 +568,62 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_3_target", &targetmodel.materials[3]);
         DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
+
+        glDisable(GL_CULL_FACE);
+
+        // PLANE LEFT
+        float size = 25.0;
+        model = Matrix_Translate(-size, 0.0f, 0.0f)
+        * Matrix_Rotate_Z(M_PI/2.0f)         // Inclina para o plano YZ, mas para o outro lado
+        * Matrix_Scale(size, size, size);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE_LEFT);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
+        DrawVirtualObject("the_plane");
+
+        // PLANE RIGHT
+        model = Matrix_Translate(size, 0.0f, 0.0f)
+        * Matrix_Rotate_Z(-M_PI/2.0)        // Inclina para o plano YZ
+        * Matrix_Scale(size, size, size);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE_RIGHT);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
+        DrawVirtualObject("the_plane");
+
+        // PLANE BOTTOM
+        model = Matrix_Translate(0.0f, -size, 0.0f) * Matrix_Scale(size,size,size);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE_BOTTOM);
+        DrawVirtualObject("the_plane");
+
+        // PLANE TOP
+        model = Matrix_Translate(0.0f, size, 0.0f) * Matrix_Scale(size,size,size);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE_TOP);
+        DrawVirtualObject("the_plane");
+
+        // PLANE FRONT
+        model = Matrix_Translate(0.0f, 0.0f, size)
+        * Matrix_Rotate_X(M_PI/2.0f) // Flip plano para frente
+        * Matrix_Scale(size, size, size);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE_FRONT);
+        DrawVirtualObject("the_plane");
+
+        // PLANE BACK
+        model = Matrix_Translate(0.0f, 0.0f, -size)
+        * Matrix_Rotate_X(-M_PI/2.0f) // Flip plano para frente
+        * Matrix_Scale(size, size, size);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE_BACK);
+        DrawVirtualObject("the_plane");
         
         //glCullFace(GL_FRONT);
-        glUniform1i(g_object_id_uniform, SKYBOX);
-        glUniform1i(g_lighting_model_uniform, 0); // Phong para SKYBOX (não importa muito)
-        model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        DrawVirtualObject("skybox");
+        // glUniform1i(g_object_id_uniform, PLANE);
+        // glUniform1i(g_lighting_model_uniform, 0); // Phong para SKYBOX (não importa muito)
+        // model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
+        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        // DrawVirtualObject("skybox");
         //glCullFace(GL_BACK);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
