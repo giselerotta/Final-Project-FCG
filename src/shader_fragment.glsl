@@ -115,34 +115,6 @@ void main()
         Ks = vec3(0.8, 0.8, 0.8);
         Ka = vec3(0.04,0.2,0.4);
         q = 32.0;
-        // // Usa as propriedades do material MTL via uniformes e combina com textura se disponível
-        // 
-        // // Seleciona a textura baseada no material_id
-        // if (material_id == 0) {
-        //     texcolor = texture(TextureImage10, texcoords); // Eye texture
-        // } else if (material_id == 1) {
-        //     texcolor = texture(TextureImage16, texcoords); // Hair texture
-        // } else if (material_id == 2) {
-        //     texcolor = texture(TextureImage14, texcoords); // Body texture
-        // } else if (material_id == 3) {
-        //     texcolor = texture(TextureImage11, texcoords); // T-shirt texture
-        // } else if (material_id == 4) {
-        //     texcolor = texture(TextureImage12, texcoords); // Belt texture
-        // } else if (material_id == 5) {
-        //     texcolor = texture(TextureImage13, texcoords); // Archer texture
-        // } else if (material_id == 6) {
-        //     texcolor = texture(TextureImage15, texcoords); // Material texture
-        // } else if (material_id == 7) {
-        //     texcolor = texture(TextureImage14, texcoords); // Body texture (repeated)
-        // } else if (material_id == 8) {
-        //     texcolor = texture(TextureImage10, texcoords); // Eye texture (repeated)
-        // }
-        // 
-        // // Combina a textura com as propriedades do material
-        // Kd = texcolor.rgb * Kd_uniform;
-        // Ka = Ka_uniform;
-        // Ks = Ks_uniform;
-        // q = q_uniform;
     }
     else if (object_id == TARGET)
     {
@@ -181,24 +153,24 @@ void main()
         
         // Aplica textura baseada no material ID com mapeamento mais lógico
         //vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
-        if (material_id == 0) {
-            texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo
-        } else if (material_id == 1) {
-            texcolor = texture(TextureImage10, texcoords); // Eye_diff - Olhos
-        } else if (material_id == 2) {
-            texcolor = texture(TextureImage16, texcoords); // Hair_DIff - Cabelo
-        } else if (material_id == 3) {
-            texcolor = texture(TextureImage12, texcoords); // TSHIRT_2 - Camisa
-        } else if (material_id == 4) {
-            texcolor = texture(TextureImage11, texcoords); // BELT_4 - Cinto
-        } else if (material_id == 5) {
-            texcolor = texture(TextureImage13, texcoords); // ARCHER_012 - Armadura
-        } else if (material_id == 6) {
-            texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico
-        } else if (material_id == 7) {
-            texcolor = texture(TextureImage14, texcoords); // WARRIOR_Body - Corpo (repetido)
-        } else if (material_id == 8) {
-            texcolor = texture(TextureImage15, texcoords); // Material.001 - Material genérico (repetido)
+        if (material_id == 0) { // CARA - OK
+            texcolor = texture(TextureImage13, texcoords);  
+        } else if (material_id == 1) { // ARCO - ????
+         texcolor = texture(TextureImage12, texcoords); 
+        } else if (material_id == 2) { // CABELO - OK
+            texcolor = texture(TextureImage16, texcoords);  
+        } else if (material_id == 3) { // PÉ - OK
+            texcolor = texture(TextureImage15, texcoords);
+        } else if (material_id == 4) { // - ROUPA
+            texcolor = texture(TextureImage11, texcoords);  
+        } else if (material_id == 5) { // MÃOS (CORPO?)
+          texcolor = texture(TextureImage14, texcoords); 
+        } else if (material_id == 6) { // ????????????????
+          texcolor = texture(TextureImage10, texcoords); 
+        } else if (material_id == 7) { // OLHOS - OK
+            texcolor = texture(TextureImage10, texcoords); 
+        } else if (material_id == 8) { // ??????????????
+            texcolor = texture(TextureImage11, texcoords); 
         }
         
         // Mistura a textura com as propriedades do material
