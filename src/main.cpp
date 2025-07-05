@@ -47,67 +47,10 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+#include "object.h"
+#include "collisions.h"
 
 #define M_PI 3.14159265358979323846
-
-// Estrutura que representa um modelo geométrico carregado a partir de um
-// arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
-struct ObjModel
-{
-    tinyobj::attrib_t                 attrib;
-    std::vector<tinyobj::shape_t>     shapes;
-    std::vector<tinyobj::material_t>  materials;
-
-    // Este construtor lê o modelo de um arquivo utilizando a biblioteca tinyobjloader.
-    // Veja: https://github.com/syoyo/tinyobjloader
-    ObjModel(const char* filename, const char* basepath = NULL, bool triangulate = true)
-    {
-        printf("Carregando objetos do arquivo \"%s\"...\n", filename);
-
-        // Se basepath == NULL, então setamos basepath como o dirname do
-        // filename, para que os arquivos MTL sejam corretamente carregados caso
-        // estejam no mesmo diretório dos arquivos OBJ.
-        std::string fullpath(filename);
-        std::string dirname;
-        if (basepath == NULL)
-        {
-            auto i = fullpath.find_last_of("/");
-            if (i != std::string::npos)
-            {
-                dirname = fullpath.substr(0, i+1);
-                basepath = dirname.c_str();
-            }
-        }
-
-        std::string warn;
-        std::string err;
-        bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename, basepath, triangulate);
-
-        if (!err.empty())
-            fprintf(stderr, "\n%s\n", err.c_str());
-
-        if (!ret)
-            throw std::runtime_error("Erro ao carregar modelo.");
-
-        for (size_t shape = 0; shape < shapes.size(); ++shape)
-        {
-            if (shapes[shape].name.empty())
-            {
-                fprintf(stderr,
-                        "*********************************************\n"
-                        "Erro: Objeto sem nome dentro do arquivo '%s'.\n"
-                        "Veja https://www.inf.ufrgs.br/~eslgastal/fcg-faq-etc.html#Modelos-3D-no-formato-OBJ .\n"
-                        "*********************************************\n",
-                    filename);
-                throw std::runtime_error("Objeto sem nome.");
-            }
-            printf("- Objeto '%s'\n", shapes[shape].name.c_str());
-        }
-
-        printf("OK.\n");
-    }
-};
-
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -496,7 +439,11 @@ int main(int argc, char* argv[])
         }
 
         glm::mat4 model = Matrix_Identity();
-        glm::mat4 archer_model = Matrix_Identity(); // Transformação identidade de modelagem
+        glm::mat4 archer_model = Matrix_Identity();
+        glm::mat4 target1_model = Matrix_Identity();
+        glm::mat4 target2_model = Matrix_Identity();
+        glm::mat4 arrow_model = Matrix_Identity();
+        glm::mat4 planes[4] = Matrix_Identity(); // Transformação identidade de modelagem
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
@@ -514,6 +461,31 @@ int main(int argc, char* argv[])
         #define TARGET 2
         #define ARCHER 3
         #define ARROW 4
+
+        // -------------  MOVIMENTAÇÃO -----------------
+        float forward_x = -sin(g_CameraTheta);
+        float forward_z = -cos(g_CameraTheta);
+
+        float right_x = cos(g_CameraTheta);
+        float right_z = -sin(g_CameraTheta);  
+        float speed = 0.15f;
+
+        if (W_pressed) {
+            pos_x += speed * forward_x;
+            pos_z += speed * forward_z;
+        }
+        if (S_pressed) {
+            pos_x -= speed * forward_x;
+            pos_z -= speed * forward_z;
+        }
+        if (D_pressed) {
+            pos_x += speed * right_x;
+            pos_z += speed * right_z;
+        }
+        if (A_pressed) {
+            pos_x -= speed * right_x;
+            pos_z -= speed * right_z;
+        }
 
         // model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
         // * Matrix_Rotate_Y(g_CameraTheta + M_PI)
@@ -551,10 +523,11 @@ int main(int argc, char* argv[])
         }
     
         // TARGET 1
-        model =
+        target1_model =
         Matrix_Translate(0, -23.0f, -15.0f)
         *  Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        model = target1_model;
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -568,10 +541,11 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // TARGET 2
-        model = Matrix_Translate(10, -23.0f, 10)
+        target2_model = Matrix_Translate(10, -23.0f, 10)
         * Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Rotate_Z(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        model = target2_model;
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -585,12 +559,13 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // ARROW
-        model =  Matrix_Translate(pos_x-1.5, pos_y-10.0f, pos_z+4)
+        arrow_model =  Matrix_Translate(pos_x-1.5, pos_y-10.0f, pos_z+4)
         *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
         *  Matrix_Rotate_X(10.41)
         *  Matrix_Rotate_Y(9.82) 
         *  Matrix_Rotate_Z(11.58)
         *  Matrix_Scale(0.3f, 0.3f, 0.3f);
+        model = arrow_model;
         
         // Matrix_Translate(pos_x, pos_y-23.0f, pos_z) * Matrix_Translate(-1.5, -10.0f, 4)
         // *  Matrix_Rotate_X(10.41)
@@ -618,6 +593,7 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE_LEFT);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
         DrawVirtualObject("the_plane");
+        planes[0] = model; 
 
         // PLANE RIGHT
         model = Matrix_Translate(size, 0.0f, 0.0f)
@@ -627,6 +603,7 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE_RIGHT);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
         DrawVirtualObject("the_plane");
+        planes[1] = model;
 
         // PLANE BOTTOM
         model = Matrix_Translate(0.0f, -size, 0.0f) * Matrix_Scale(size,size,size);
@@ -647,6 +624,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE_FRONT);
         DrawVirtualObject("the_plane");
+        planes[2] = model;
 
         // PLANE BACK
         model = Matrix_Translate(0.0f, 0.0f, -size)
@@ -655,6 +633,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE_BACK);
         DrawVirtualObject("the_plane");
+        planes[3] = model;
         
         //glCullFace(GL_FRONT);
         // glUniform1i(g_object_id_uniform, PLANE);
@@ -663,6 +642,46 @@ int main(int argc, char* argv[])
         // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         // DrawVirtualObject("skybox");
         //glCullFace(GL_BACK);
+
+        // Teste de Intersecções
+        BoundingBox archer_local_box = ComputeLocalBoundingBox(archermodel.attrib);
+        BoundingBox arrow_local_box  = ComputeLocalBoundingBox(arrowmodel.attrib);
+        BoundingBox target_local_box = ComputeLocalBoundingBox(targetmodel.attrib);
+        BoundingBox plane_local_box = ComputeLocalBoundingBox(planemodel.attrib);
+
+        BoundingBox archer_world_box = TransformBoundingBox(archer_local_box, archer_model);
+        BoundingBox arrow_world_box  = TransformBoundingBox(arrow_local_box, arrow_model);
+        BoundingBox target1_world_box = TransformBoundingBox(target_local_box, target1_model);
+        BoundingBox target2_world_box = TransformBoundingBox(target_local_box, target2_model);
+        BoundingBox plane0_world_box = TransformBoundingBox(plane_local_box, planes[0]);
+        BoundingBox plane1_world_box = TransformBoundingBox(plane_local_box, planes[1]);
+        BoundingBox plane2_world_box = TransformBoundingBox(plane_local_box, planes[2]);
+        BoundingBox plane3_world_box = TransformBoundingBox(plane_local_box, planes[3]);
+
+        // Intersecção Archer
+        if (IntersectAABB(archer_world_box, target1_world_box) || 
+            IntersectAABB(archer_world_box, target2_world_box) ||
+            IntersectAABB(archer_world_box, plane0_world_box) ||
+            IntersectAABB(archer_world_box, plane1_world_box) ||
+            IntersectAABB(archer_world_box, plane2_world_box) ||
+            IntersectAABB(archer_world_box, plane3_world_box)) {
+            if (W_pressed) {
+                pos_x -= speed * forward_x;
+                pos_z -= speed * forward_z;
+            }
+            if (S_pressed) {
+                pos_x += speed * forward_x;
+                pos_z += speed * forward_z;
+            }
+            if (D_pressed) {
+                pos_x -= speed * right_x;
+                pos_z -= speed * right_z;
+            }
+            if (A_pressed) {
+                pos_x += speed * right_x;
+                pos_z += speed * right_z;
+            }
+        }
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1481,49 +1500,44 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         LoadShadersFromFiles();
     }
 
-    // MOVIMENTAÇÃO DO BONECO
-    float forward_x = -sin(g_CameraTheta);
-    float forward_z = -cos(g_CameraTheta);
-
-    float right_x = cos(g_CameraTheta);
-    float right_z = -sin(g_CameraTheta);    
-
-    float speed = 6.0f;
-
     // Teste se o usuário pressionou a tecla D
     if (key == GLFW_KEY_D)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x += right_x * speed * g_DeltaTime;
-            pos_z += right_z * speed * g_DeltaTime;
+            D_pressed = true;
         }
+        else if (action == GLFW_RELEASE)
+            D_pressed = false;
     }
 
     // Teste se o usuário pressionou a tecla A
     if (key == GLFW_KEY_A)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x -= right_x * speed * g_DeltaTime;
-            pos_z -= right_z * speed * g_DeltaTime;
+            A_pressed = true;
         }
+        else if (action == GLFW_RELEASE)
+            A_pressed = false;
     }
 
     // Teste se o usuário pressionou a tecla S
     if (key == GLFW_KEY_S)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x -= forward_x * speed * g_DeltaTime;
-            pos_z -= forward_z * speed * g_DeltaTime;
+            S_pressed = true;
         }
+        else if (action == GLFW_RELEASE)
+            S_pressed = false;
     }
 
     // Teste se o usuário pressionou a tecla W
     if (key == GLFW_KEY_W)
     {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            pos_x += forward_x * speed * g_DeltaTime;
-            pos_z += forward_z * speed * g_DeltaTime;
+            W_pressed = true;
         }
+        else if (action == GLFW_RELEASE)
+            W_pressed = false;
     }
 
 }

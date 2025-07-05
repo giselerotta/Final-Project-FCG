@@ -11,6 +11,8 @@ set(SOURCES
   src/tiny_obj_loader.cpp
   src/glad.c
   src/stb_image.cpp
+  src/object.cpp
+  src/collisions.cpp
 )
 
 cmake_minimum_required(VERSION 4.0.0)
