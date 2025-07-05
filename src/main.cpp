@@ -495,7 +495,8 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
-        glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
+        glm::mat4 model = Matrix_Identity();
+        glm::mat4 archer_model = Matrix_Identity(); // Transformação identidade de modelagem
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
@@ -514,36 +515,40 @@ int main(int argc, char* argv[])
         #define ARCHER 3
         #define ARROW 4
 
-        model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
-        * Matrix_Rotate_Y(g_CameraTheta + M_PI)
-        * Matrix_Scale(0.1f, 0.1f, 0.1f);
+        // model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
+        // * Matrix_Rotate_Y(g_CameraTheta + M_PI)
+        // * Matrix_Scale(0.1f, 0.1f, 0.1f);
         
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, CHARACTER);
-        glUniform1i(g_lighting_model_uniform, 0); // Phong para CHARACTER
+        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        // glUniform1i(g_object_id_uniform, CHARACTER);
+        // glUniform1i(g_lighting_model_uniform, 0); // Phong para CHARACTER
         
-        // Desenhamos o modelo do Character
-        if(look_at){
-            DrawVirtualObject("Base_Male");
-        }
+        // // Desenhamos o modelo do Character
+        // if(look_at){
+        //     DrawVirtualObject("Base_Male");
+        // }
 
         // ARCHER
-        model = Matrix_Translate(0, -23.0f, 0) 
+        archer_model = Matrix_Translate(pos_x, pos_y-23.0f, pos_z) 
+        * Matrix_Rotate_Y(g_CameraTheta + M_PI)
         * Matrix_Scale(0.08f, 0.08f, 0.08f);
-        
+        model = archer_model;
+
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ARCHER);
         glUniform1i(g_lighting_model_uniform, 1); // Gouraud para ARCHER
 
-        DrawVirtualObjectWithMaterial("object_0", &archermodel.materials[0]);
-        DrawVirtualObjectWithMaterial("object_1", &archermodel.materials[1]);
-        DrawVirtualObjectWithMaterial("object_2", &archermodel.materials[2]);
-        DrawVirtualObjectWithMaterial("object_3", &archermodel.materials[3]);
-        DrawVirtualObjectWithMaterial("object_4", &archermodel.materials[4]);
-        DrawVirtualObjectWithMaterial("object_5", &archermodel.materials[5]);
-        DrawVirtualObjectWithMaterial("object_6", &archermodel.materials[6]);
-        DrawVirtualObjectWithMaterial("object_7", &archermodel.materials[7]);
-        DrawVirtualObjectWithMaterial("object_8", &archermodel.materials[8]);
+        if(look_at){
+            DrawVirtualObjectWithMaterial("object_0", &archermodel.materials[0]);
+            DrawVirtualObjectWithMaterial("object_1", &archermodel.materials[1]);
+            DrawVirtualObjectWithMaterial("object_2", &archermodel.materials[2]);
+            DrawVirtualObjectWithMaterial("object_3", &archermodel.materials[3]);
+            DrawVirtualObjectWithMaterial("object_4", &archermodel.materials[4]);
+            DrawVirtualObjectWithMaterial("object_5", &archermodel.materials[5]);
+            DrawVirtualObjectWithMaterial("object_6", &archermodel.materials[6]);
+            DrawVirtualObjectWithMaterial("object_7", &archermodel.materials[7]);
+            DrawVirtualObjectWithMaterial("object_8", &archermodel.materials[8]);
+        }
     
         // TARGET 1
         model =
@@ -580,17 +585,26 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // ARROW
-        model = Matrix_Translate(-1.5, -10.0f, 4)
+        model =  Matrix_Translate(pos_x-1.5, pos_y-10.0f, pos_z+4)
+        *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
         *  Matrix_Rotate_X(10.41)
-        *  Matrix_Rotate_Y(9.82)
+        *  Matrix_Rotate_Y(9.82) 
         *  Matrix_Rotate_Z(11.58)
-        * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        *  Matrix_Scale(0.3f, 0.3f, 0.3f);
+        
+        // Matrix_Translate(pos_x, pos_y-23.0f, pos_z) * Matrix_Translate(-1.5, -10.0f, 4)
+        // *  Matrix_Rotate_X(10.41)
+        // *  Matrix_Rotate_Y(g_CameraTheta + M_PI) *  Matrix_Rotate_Y(9.82)
+        // *  Matrix_Rotate_Z(11.58)
+        // *  Matrix_Scale(0.3f, 0.3f, 0.3f);
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ARROW);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
 
-        DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
+        if(look_at){
+            DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
+        }
 
         // PLANES
         glDisable(GL_CULL_FACE);
