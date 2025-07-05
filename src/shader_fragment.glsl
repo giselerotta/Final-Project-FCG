@@ -31,6 +31,7 @@ uniform mat4 projection;
 #define PLANE_BACK 16
 #define TARGET 2
 #define ARCHER 3
+#define ARROW 4
 
 uniform int object_id;
 
@@ -62,6 +63,7 @@ uniform sampler2D TextureImage13;
 uniform sampler2D TextureImage14;
 uniform sampler2D TextureImage15;
 uniform sampler2D TextureImage16;
+uniform sampler2D TextureImage17;
 
 uniform vec3 Kd_uniform;
 uniform vec3 Ka_uniform;
@@ -180,6 +182,23 @@ void main()
         
         // Mistura a textura com as propriedades do material
         Kd = Kd * texcolor.rgb;
+    }
+    else if (object_id == ARROW)
+    {
+        // Usa as propriedades do material MTL via uniformes
+        Kd = Kd_uniform;
+        Ka = Ka_uniform;
+        Ks = Ks_uniform;
+        q = q_uniform;
+        
+        // Aplica textura baseada no material ID
+        //vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
+        //if (material_id == 0) {
+        //    texcolor = texture(TextureImage17, texcoords); // target-paper
+        //} 
+        
+        // Mistura a textura com as propriedades do material
+        //Kd = Kd * texcolor.rgb;
     }
     else if (
         object_id == PLANE_LEFT  || object_id == PLANE_RIGHT ||

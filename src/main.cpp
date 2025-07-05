@@ -333,7 +333,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("data/target/RGB_47bd90a446e546bca69fa88b48a09312_target-paper_diffuse.jpeg");     // TextureImage7
     LoadTextureImage("data/target/RGB_7011de0aa4ab44cb927a6767fa8aa3ef_wood_hinge_diffuse.jpeg");       // TextureImage8
     LoadTextureImage("data/target/RGB_da371e9e3c3d460c986fe6316c40bc6c_Wood_stand_Diffuse_final.jpeg"); // TextureImage9
-
+    // Texturas do Character
     LoadTextureImage("data/character/RGB_1b6e32c5408a4a13ad1d8f411749c0e4_Eye_diff_001.png");                                // TextureImage10
     LoadTextureImage("data/character/RGB_6f1df117890d4d80893d2170dc81c4b3_ARCHER_FOR_SUBS_TSHIRT_2_BaseColor.1001.jpeg");    // TextureImage11
     LoadTextureImage("data/character/RGB_6f3d0106dc4540efb1e0628732bba968_ARCHER_FOR_SUBS_BELT_4_BaseColor.1001.jpeg");      // TextureImage12
@@ -341,7 +341,9 @@ int main(int argc, char* argv[])
     LoadTextureImage("data/character/RGB_4886c183ab0b499793b6a5b448ef285d_WARRIOR_Body_new_low_001_defaultMat_BaseCo.jpeg"); // TextureImage14
     LoadTextureImage("data/character/RGB_b4890e0bef3e4568a4bd860662769c4e_ARCHER_FOR_SUBS_Material.001_BaseColor.100.jpeg"); // TextureImage15
     LoadTextureImage("data/character/RGB_e40db1c3e31f4d2a92b06d9a0bae4a48_Hair_DIff_01.jpeg");                               // TextureImage16
-    
+    // Textura do Arrow
+    LoadTextureImage("data/arrow/WoodenArrowAlbedo.png"); //TextureImage17
+
     ObjModel charactermodel("data/male_mesh.obj");
     ComputeNormals(&charactermodel);
     BuildTrianglesAndAddToVirtualScene(&charactermodel);
@@ -357,6 +359,10 @@ int main(int argc, char* argv[])
     ObjModel archermodel("data/character/model.obj");
     ComputeNormals(&archermodel);
     BuildTrianglesAndAddToVirtualScene(&archermodel);
+
+    ObjModel arrowmodel("data/arrow/model.obj");
+    ComputeNormals(&arrowmodel);
+    BuildTrianglesAndAddToVirtualScene(&arrowmodel);
 
     if ( argc > 1 )
     {
@@ -506,6 +512,7 @@ int main(int argc, char* argv[])
         #define PLANE_BACK 16
         #define TARGET 2
         #define ARCHER 3
+        #define ARROW 4
 
         model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
         * Matrix_Rotate_Y(g_CameraTheta + M_PI)
@@ -515,11 +522,12 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, CHARACTER);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para CHARACTER
         
-        // Desenhamos o modelo do coelho
+        // Desenhamos o modelo do Character
         if(look_at){
             DrawVirtualObject("Base_Male");
         }
 
+        // ARCHER
         model = Matrix_Translate(0, -23.0f, 0) 
         * Matrix_Scale(0.08f, 0.08f, 0.08f);
         
@@ -536,7 +544,8 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_6", &archermodel.materials[6]);
         DrawVirtualObjectWithMaterial("object_7", &archermodel.materials[7]);
         DrawVirtualObjectWithMaterial("object_8", &archermodel.materials[8]);
-
+    
+        // TARGET 1
         model =
         Matrix_Translate(0, -23.0f, -15.0f)
         *  Matrix_Rotate_X(3*M_PI/2)
@@ -553,6 +562,7 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
+        // TARGET 2
         model = Matrix_Translate(10, -23.0f, 10)
         * Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Rotate_Z(3*M_PI/2)
@@ -569,6 +579,20 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
+        // ARROW
+        model = Matrix_Translate(-1.5, -10.0f, 4)
+        *  Matrix_Rotate_X(10.41)
+        *  Matrix_Rotate_Y(9.82)
+        *  Matrix_Rotate_Z(11.58)
+        * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, ARROW);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
+
+        DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
+
+        // PLANES
         glDisable(GL_CULL_FACE);
 
         // PLANE LEFT
