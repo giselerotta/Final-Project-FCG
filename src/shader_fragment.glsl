@@ -193,12 +193,12 @@ void main()
         
         // Aplica textura baseada no material ID
         //vec4 texcolor = vec4(1.0, 1.0, 1.0, 1.0);
-        //if (material_id == 0) {
-        //    texcolor = texture(TextureImage17, texcoords); // target-paper
-        //} 
+        if (material_id == 0) {
+            texcolor = texture(TextureImage17, texcoords); // target-paper
+        } 
         
         // Mistura a textura com as propriedades do material
-        //Kd = Kd * texcolor.rgb;
+        Kd = Kd * texcolor.rgb;
     }
     else if (
         object_id == PLANE_LEFT  || object_id == PLANE_RIGHT ||
