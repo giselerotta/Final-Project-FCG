@@ -193,6 +193,14 @@ bool g_ShowInfoText = true;
 // Delta para variação do tempo
 float g_DeltaTime = 0.0f;
 
+// Transformações geométricas dos alvos
+float T1_posx = 0.0f;
+float T2_scale = 0.0f;
+float T3_rotatez = 0.0f;
+
+bool T1_flag = true;
+bool T2_flag = true;
+
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
 GLint g_model_uniform;
@@ -237,7 +245,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "Arco e Flecha", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Final Project FCG", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -459,14 +467,14 @@ int main(int argc, char* argv[])
 
         glm::mat4 model = Matrix_Identity();
         glm::mat4 archer_model = Matrix_Identity();
-        glm::mat4 target1_model = Matrix_Identity();
-        glm::mat4 target2_model = Matrix_Identity();
         glm::mat4 arrow_model = Matrix_Identity();
-        glm::mat4 planes[4]; // Array de transformações para os planos
+        glm::mat4 planes[4]; 
+        glm::mat4 targets[4]; 
         
         // Inicializa todos os elementos do array
         for(int i = 0; i < 4; i++) {
             planes[i] = Matrix_Identity();
+            targets[i] = Matrix_Identity();
         }
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
@@ -554,11 +562,11 @@ int main(int argc, char* argv[])
         }
     
         // TARGET 1
-        target1_model =
-        Matrix_Translate(0, -23.0f, -15.0f)
+        targets[0] =
+        Matrix_Translate(T1_posx, -23.0f, -17.0f)
         *  Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
-        model = target1_model;
+        model = targets[0];
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -572,11 +580,29 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // TARGET 2
-        target2_model = Matrix_Translate(10, -23.0f, 10)
+        targets[1] = Matrix_Translate(15, -23.0f, 13)
         * Matrix_Rotate_X(3*M_PI/2)
-        * Matrix_Rotate_Z(3*M_PI/2)
+        * Matrix_Rotate_Z(4.12)
+        * Matrix_Scale(0.01f+T2_scale, 0.01f+T2_scale, 0.01f+T2_scale);
+        model = targets[1];
+        
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, TARGET);
+        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
+
+        DrawVirtualObjectWithMaterial("object_0_target", &targetmodel.materials[0]);
+        DrawVirtualObjectWithMaterial("object_1_target", &targetmodel.materials[1]);
+        DrawVirtualObjectWithMaterial("object_2_target", &targetmodel.materials[2]);
+        DrawVirtualObjectWithMaterial("object_3_target", &targetmodel.materials[3]);
+        DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
+        DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
+
+        // TARGET 3
+        targets[2] = Matrix_Translate(-15, -23.0f, 13)
+        * Matrix_Rotate_X(3*M_PI/2)
+        * Matrix_Rotate_Z(-4.12+T3_rotatez)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
-        model = target2_model;
+        model = targets[2];
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -627,9 +653,9 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, ARROW);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
 
-        //if(look_at || g_ArrowFired) {
+        if(look_at || g_ArrowFired || g_ArrowCollided) {
             DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
-        //}
+        }
 
         // PLANES
         glDisable(GL_CULL_FACE);
@@ -701,8 +727,9 @@ int main(int argc, char* argv[])
 
         BoundingBox archer_world_box = TransformBoundingBox(archer_local_box, archer_model);
         BoundingBox arrow_world_box  = TransformBoundingBox(arrow_local_box, arrow_model);
-        BoundingBox target1_world_box = TransformBoundingBox(target_local_box, target1_model);
-        BoundingBox target2_world_box = TransformBoundingBox(target_local_box, target2_model);
+        BoundingBox target1_world_box = TransformBoundingBox(target_local_box, targets[0]);
+        BoundingBox target2_world_box = TransformBoundingBox(target_local_box, targets[1]);
+        BoundingBox target3_world_box = TransformBoundingBox(target_local_box, targets[2]);
         BoundingBox plane0_world_box = TransformBoundingBox(plane_local_box, planes[0]);
         BoundingBox plane1_world_box = TransformBoundingBox(plane_local_box, planes[1]);
         BoundingBox plane2_world_box = TransformBoundingBox(plane_local_box, planes[2]);
@@ -711,6 +738,7 @@ int main(int argc, char* argv[])
         // Intersecção Archer
         if (IntersectAABB(archer_world_box, target1_world_box) ||  // Colisão cubo-cubo
             IntersectAABB(archer_world_box, target2_world_box) ||
+            IntersectAABB(archer_world_box, target3_world_box) ||
             IntersectAABB(archer_world_box, plane0_world_box) ||  // Colisão cubo-plano
             IntersectAABB(archer_world_box, plane1_world_box) ||
             IntersectAABB(archer_world_box, plane2_world_box) ||
@@ -733,8 +761,10 @@ int main(int argc, char* argv[])
             }
         }
 
+        g_ArrowCurrentPos.x = g_ArrowCurrentPos.x - 5.0f;
         if (PointInsideAABB(g_ArrowCurrentPos, target1_world_box) ||
             PointInsideAABB(g_ArrowCurrentPos, target2_world_box) ||
+            PointInsideAABB(g_ArrowCurrentPos, target3_world_box) ||
             // Não está detectando as colisões com os planos
             PointInsidePlane(g_ArrowCurrentPos, plane0_world_box) || 
             PointInsidePlane(g_ArrowCurrentPos, plane1_world_box) ||
@@ -785,7 +815,7 @@ int main(int argc, char* argv[])
 // Função que carrega uma imagem para ser utilizada como textura
 void LoadTextureImage(const char* filename)
 {
-    printf("Carregando imagem \"%s\"... ", filename);
+    //printf("Carregando imagem \"%s\"... ", filename);
 
     // Primeiro fazemos a leitura da imagem do disco
     stbi_set_flip_vertically_on_load(true);
@@ -800,7 +830,7 @@ void LoadTextureImage(const char* filename)
         std::exit(EXIT_FAILURE);
     }
 
-    printf("OK (%dx%d).\n", width, height);
+    //printf("OK (%dx%d).\n", width, height);
 
     // Agora criamos objetos na GPU com OpenGL para armazenar a textura
     GLuint texture_id;
@@ -1568,9 +1598,43 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
 
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    if (key == GLFW_KEY_L && action == GLFW_PRESS)
     {
         LoadShadersFromFiles();
+    }
+
+    // Transformação Target 1 de Translação
+    if (key == GLFW_KEY_T && action == GLFW_PRESS)
+    {
+        if (T1_flag) { // Ir para diretia
+            T1_posx = T1_posx + 1.0f;   
+            if (T1_posx >= 17.0f)
+                T1_flag = false; // Reseta a posição se ultrapassar o limite
+        } else {
+            T1_posx = T1_posx - 1.0f;              
+            if (T1_posx <= -17.0f)
+                T1_flag = true; // Reseta a posição se ultrapassar o limite
+        }
+    }
+
+    // Transformação Target 2 de Escala
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+    {
+        if (T2_flag) { // Ir para diretia
+            T2_scale = T2_scale + 0.002f;   
+            if (T2_scale >= 0.01f)
+                T2_flag = false; // Reseta a posição se ultrapassar o limite
+        } else {
+            T2_scale = T2_scale - 0.002f;              
+            if (T2_scale <= 0.0f)
+                T2_flag = true; // Reseta a posição se ultrapassar o limite
+        }
+    }
+
+    // Transformação Target 3 de Rotação
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    {
+        T3_rotatez = T3_rotatez + M_PI/4; 
     }
 
     // Teste se o usuário pressionou a tecla D
