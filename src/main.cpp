@@ -405,8 +405,8 @@ int main(int argc, char* argv[])
         if(look_at){
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(pos_x + x, pos_y + 10.0f+ y, pos_z + 2.0f + z,1.0f); // Ponto "c", centro da câmera
-            camera_lookat_l    = glm::vec4(pos_x,pos_y + 10.0f, pos_z + 2.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_position_c  = glm::vec4(pos_x + x, pos_y + 8.0f+ y, pos_z + 2.0f + z,1.0f); // Ponto "c", centro da câmera
+            camera_lookat_l    = glm::vec4(pos_x,pos_y + 8.0f, pos_z + 2.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         }
@@ -596,8 +596,11 @@ int main(int argc, char* argv[])
             * Matrix_Rotate_X(g_ArrowCurrentRotation.x + 5*M_PI/4.0f) // Ajusta a rotação X para apontar para frente
             * Matrix_Scale(0.3f, 0.3f, 0.3f);
         } else {
-            // Posição original da flecha (junto ao archer)
-            arrow_model =  Matrix_Translate(pos_x-1.5, pos_y-10.0f, pos_z+4)
+            // Posição da flecha anexada ao archer, considerando sua rotação
+            float archer_offset_x = -1.5f * cos(g_CameraTheta);
+            float archer_offset_z = sin(g_CameraTheta);
+            
+            arrow_model =  Matrix_Translate(pos_x + archer_offset_x, pos_y-10.0f, pos_z + archer_offset_z)
             *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
             *  Matrix_Rotate_X(10.41)
             *  Matrix_Rotate_Y(9.82) 
@@ -1678,8 +1681,11 @@ void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection)
     g_ArrowFired = true;
     g_ArrowTime = 0.0f;
     
-    // Posição inicial da flecha (posição atual do archer)
-    g_ArrowStartPos = glm::vec3(pos_x - 1.5f, pos_y - 10.0f, pos_z + 4.0f);
+    // Calcula a posição inicial da flecha considerando a rotação do archer
+    float archer_offset_x = -1.5f * cos(g_CameraTheta);
+    float archer_offset_z = sin(g_CameraTheta);
+    
+    g_ArrowStartPos = glm::vec3(pos_x + archer_offset_x, pos_y - 10.0f, pos_z + archer_offset_z);
     
     // Posição do cursor do mouse no mundo
     double xpos, ypos;
