@@ -51,6 +51,17 @@ bool IntersectAABB(const BoundingBox& a, const BoundingBox& b) {
            (a.min.z <= b.max.z && a.max.z >= b.min.z);
 }
 
+bool PointInsideAABB(const glm::vec3& point, const BoundingBox& box) {
+    return (point.x >= box.min.x && point.x <= box.max.x) &&
+           (point.y >= box.min.y && point.y <= box.max.y) &&
+           (point.z >= box.min.z && point.z <= box.max.z);
+}
+
+bool PointInsidePlane(const glm::vec3& point, const BoundingBox& box) {
+    return (point.x >= box.min.x && point.x <= box.max.x) &&
+           (point.z >= box.min.z && point.z <= box.max.z);
+}
+
 // Exemplo de uso para sua main.cpp
 // Você deve passar os modelos e as matrizes de modelagem corretas
 // Função para criar bounding boxes de todos os objetos relevantes

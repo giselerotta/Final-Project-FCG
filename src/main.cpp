@@ -171,6 +171,7 @@ float g_TorsoPositionY = 0.0f;
 
 // Variáveis para controle da flecha
 bool g_ArrowFired = false;
+bool g_ArrowCollided = false; // Indica se a flecha colidiu com algum objeto
 float g_ArrowTime = 0.0f;
 float g_ArrowDuration = 1.0f; // Duração do voo da flecha em segundos
 glm::vec3 g_ArrowStartPos;
@@ -405,8 +406,8 @@ int main(int argc, char* argv[])
         if(look_at){
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(pos_x + x, pos_y + 8.0f+ y, pos_z + 2.0f + z,1.0f); // Ponto "c", centro da câmera
-            camera_lookat_l    = glm::vec4(pos_x,pos_y + 8.0f, pos_z + 2.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_position_c  = glm::vec4(pos_x + x, pos_y + 4.0f + y, pos_z + 3.0f + z,1.0f); // Ponto "c", centro da câmera
+            camera_lookat_l    = glm::vec4(pos_x, pos_y + 4.0f, pos_z + 3.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         }
@@ -421,7 +422,7 @@ int main(int argc, char* argv[])
             delta_t = current_time - prev_time;
             prev_time = current_time;
 
-            camera_position_c = glm::vec4(pos_x+1.5, pos_y+8.0, pos_z, 1.0f);
+            camera_position_c = glm::vec4(pos_x, pos_y, pos_z, 1.0f);
         }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -589,13 +590,13 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // ARROW
-        if (g_ArrowFired) {
+        if (g_ArrowFired && !g_ArrowCollided) {
             // Usa a posição calculada pela curva de Bézier com rotação simplificada
             arrow_model = Matrix_Translate(g_ArrowCurrentPos.x, g_ArrowCurrentPos.y, g_ArrowCurrentPos.z)
             * Matrix_Rotate_Y(g_ArrowCurrentRotation.y + M_PI/2)
             * Matrix_Rotate_X(g_ArrowCurrentRotation.x + 5*M_PI/4.0f) // Ajusta a rotação X para apontar para frente
             * Matrix_Scale(0.3f, 0.3f, 0.3f);
-        } else {
+        } else if (!g_ArrowCollided) {
             // Posição da flecha anexada ao archer, considerando sua rotação
             float archer_offset_x = -1.5f * cos(g_CameraTheta);
             float archer_offset_z = sin(g_CameraTheta);
@@ -606,6 +607,13 @@ int main(int argc, char* argv[])
             *  Matrix_Rotate_Y(9.82) 
             *  Matrix_Rotate_Z(11.58)
             *  Matrix_Scale(0.3f, 0.3f, 0.3f);
+        }
+        else if (g_ArrowCollided) {
+            // Se a flecha colidiu, posiciona ela no local da colisão
+            arrow_model = Matrix_Translate(g_ArrowCurrentPos.x, g_ArrowCurrentPos.y, g_ArrowCurrentPos.z)
+            * Matrix_Rotate_Y(g_ArrowCurrentRotation.y + M_PI/2)
+            * Matrix_Rotate_X(g_ArrowCurrentRotation.x + 5*M_PI/4.0f) // Ajusta a rotação X para apontar para frente
+            * Matrix_Scale(0.3f, 0.3f, 0.3f);
         }
         model = arrow_model;
         
@@ -619,9 +627,9 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, ARROW);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
 
-        if(look_at || g_ArrowFired) {
+        //if(look_at || g_ArrowFired) {
             DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
-        }
+        //}
 
         // PLANES
         glDisable(GL_CULL_FACE);
@@ -701,9 +709,9 @@ int main(int argc, char* argv[])
         BoundingBox plane3_world_box = TransformBoundingBox(plane_local_box, planes[3]);
 
         // Intersecção Archer
-        if (IntersectAABB(archer_world_box, target1_world_box) || 
+        if (IntersectAABB(archer_world_box, target1_world_box) ||  // Colisão cubo-cubo
             IntersectAABB(archer_world_box, target2_world_box) ||
-            IntersectAABB(archer_world_box, plane0_world_box) ||
+            IntersectAABB(archer_world_box, plane0_world_box) ||  // Colisão cubo-plano
             IntersectAABB(archer_world_box, plane1_world_box) ||
             IntersectAABB(archer_world_box, plane2_world_box) ||
             IntersectAABB(archer_world_box, plane3_world_box)) {
@@ -722,6 +730,22 @@ int main(int argc, char* argv[])
             if (A_pressed) {
                 pos_x += speed * right_x;
                 pos_z += speed * right_z;
+            }
+        }
+
+        if (PointInsideAABB(g_ArrowCurrentPos, target1_world_box) ||
+            PointInsideAABB(g_ArrowCurrentPos, target2_world_box) ||
+            // Não está detectando as colisões com os planos
+            PointInsidePlane(g_ArrowCurrentPos, plane0_world_box) || 
+            PointInsidePlane(g_ArrowCurrentPos, plane1_world_box) ||
+            PointInsidePlane(g_ArrowCurrentPos, plane2_world_box) ||
+            PointInsidePlane(g_ArrowCurrentPos, plane3_world_box)){
+            if(!g_ArrowCollided) {
+                // Se a flecha colidiu, vai ficar fixa na posição da colisão
+                g_ArrowFired = false;
+                g_ArrowCollided = true;
+                g_ArrowCurrentPos = g_ArrowCurrentPos;
+                g_ArrowCurrentRotation = g_ArrowCurrentRotation;
             }
         }
 
@@ -1511,7 +1535,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
         // Dispara a flecha se ainda não foi disparada e está no modo look-at
-        if (!g_ArrowFired) {
+        if (!g_ArrowFired && !g_ArrowCollided) {
             FireArrow(window, g_CurrentView, g_CurrentProjection);
         } else {
             // Comportamento original do espaço
@@ -1706,7 +1730,7 @@ void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection)
 // Função para atualizar a posição da flecha
 void UpdateArrow(float deltaTime)
 {
-    if (!g_ArrowFired) return;
+    if (!g_ArrowFired || g_ArrowCollided) return;
     
     g_ArrowTime += deltaTime;
     float t = g_ArrowTime / g_ArrowDuration;
