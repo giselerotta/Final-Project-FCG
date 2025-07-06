@@ -99,6 +99,10 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 void ApplyMaterial(const tinyobj::material_t& material);
+glm::vec3 CalculateBezierPoint(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
+glm::vec3 ScreenToWorldCoordinates(double xpos, double ypos, GLFWwindow* window, glm::mat4 view, glm::mat4 projection);
+void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection);
+void UpdateArrow(float deltaTime);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -164,6 +168,20 @@ float g_ForearmAngleX = 0.0f;
 // Variáveis que controlam translação do torso
 float g_TorsoPositionX = 0.0f;
 float g_TorsoPositionY = 0.0f;
+
+// Variáveis para controle da flecha
+bool g_ArrowFired = false;
+float g_ArrowTime = 0.0f;
+float g_ArrowDuration = 1.0f; // Duração do voo da flecha em segundos
+glm::vec3 g_ArrowStartPos;
+glm::vec3 g_ArrowTargetPos;
+glm::vec3 g_ArrowControlPoint1;
+glm::vec3 g_ArrowControlPoint2;
+glm::vec3 g_ArrowCurrentPos;
+glm::vec3 g_ArrowCurrentRotation;
+
+// Variáveis globais para matrizes (para acesso no callback)
+glm::mat4 g_CurrentView, g_CurrentProjection;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -443,13 +461,25 @@ int main(int argc, char* argv[])
         glm::mat4 target1_model = Matrix_Identity();
         glm::mat4 target2_model = Matrix_Identity();
         glm::mat4 arrow_model = Matrix_Identity();
-        glm::mat4 planes[4] = Matrix_Identity(); // Transformação identidade de modelagem
+        glm::mat4 planes[4]; // Array de transformações para os planos
+        
+        // Inicializa todos os elementos do array
+        for(int i = 0; i < 4; i++) {
+            planes[i] = Matrix_Identity();
+        }
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+
+        // Armazena matrizes para acesso global
+        g_CurrentView = view;
+        g_CurrentProjection = projection;
+
+        // Atualiza a flecha
+        UpdateArrow(g_DeltaTime);
 
         #define CHARACTER 0
         #define PLANE_LEFT 11
@@ -559,12 +589,21 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // ARROW
-        arrow_model =  Matrix_Translate(pos_x-1.5, pos_y-10.0f, pos_z+4)
-        *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
-        *  Matrix_Rotate_X(10.41)
-        *  Matrix_Rotate_Y(9.82) 
-        *  Matrix_Rotate_Z(11.58)
-        *  Matrix_Scale(0.3f, 0.3f, 0.3f);
+        if (g_ArrowFired) {
+            // Usa a posição calculada pela curva de Bézier com rotação simplificada
+            arrow_model = Matrix_Translate(g_ArrowCurrentPos.x, g_ArrowCurrentPos.y, g_ArrowCurrentPos.z)
+            * Matrix_Rotate_Y(g_ArrowCurrentRotation.y + M_PI/2)
+            * Matrix_Rotate_X(g_ArrowCurrentRotation.x + 5*M_PI/4.0f) // Ajusta a rotação X para apontar para frente
+            * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        } else {
+            // Posição original da flecha (junto ao archer)
+            arrow_model =  Matrix_Translate(pos_x-1.5, pos_y-10.0f, pos_z+4)
+            *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
+            *  Matrix_Rotate_X(10.41)
+            *  Matrix_Rotate_Y(9.82) 
+            *  Matrix_Rotate_Z(11.58)
+            *  Matrix_Scale(0.3f, 0.3f, 0.3f);
+        }
         model = arrow_model;
         
         // Matrix_Translate(pos_x, pos_y-23.0f, pos_z) * Matrix_Translate(-1.5, -10.0f, 4)
@@ -577,7 +616,7 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, ARROW);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
 
-        if(look_at){
+        if(look_at || g_ArrowFired) {
             DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
         }
 
@@ -1465,16 +1504,22 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
     }
 
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
+    // Se o usuário apertar a tecla espaço, dispara a flecha ou reseta os ângulos.
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-        g_ForearmAngleX = 0.0f;
-        g_ForearmAngleZ = 0.0f;
-        g_TorsoPositionX = 0.0f;
-        g_TorsoPositionY = 0.0f;
+        // Dispara a flecha se ainda não foi disparada e está no modo look-at
+        if (!g_ArrowFired) {
+            FireArrow(window, g_CurrentView, g_CurrentProjection);
+        } else {
+            // Comportamento original do espaço
+            g_AngleX = 0.0f;
+            g_AngleY = 0.0f;
+            g_AngleZ = 0.0f;
+            g_ForearmAngleX = 0.0f;
+            g_ForearmAngleZ = 0.0f;
+            g_TorsoPositionX = 0.0f;
+            g_TorsoPositionY = 0.0f;
+        }
     }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
@@ -1573,6 +1618,112 @@ void DrawVirtualObjectWithMaterial(const char* object_name, const tinyobj::mater
     
     // Desenha o objeto normalmente
     DrawVirtualObject(object_name);
+}
+
+// Função para calcular ponto na curva cúbica de Bézier
+glm::vec3 CalculateBezierPoint(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
+{
+    float u = 1.0f - t;
+    float tt = t * t;
+    float uu = u * u;
+    float uuu = uu * u;
+    float ttt = tt * t;
+    
+    glm::vec3 point = uuu * p0; // (1-t)^3 * P0
+    point += 3 * uu * t * p1;   // 3*(1-t)^2*t * P1
+    point += 3 * u * tt * p2;   // 3*(1-t)*t^2 * P2
+    point += ttt * p3;          // t^3 * P3
+    
+    return point;
+}
+
+// Função para converter coordenadas de tela para coordenadas do mundo
+glm::vec3 ScreenToWorldCoordinates(double xpos, double ypos, GLFWwindow* window, 
+                                   glm::mat4 view, glm::mat4 projection)
+{
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    
+    // Normaliza coordenadas de tela para NDC
+    float x = (2.0f * xpos) / width - 1.0f;
+    float y = 1.0f - (2.0f * ypos) / height;
+    
+    // Calcula ray direction
+    glm::mat4 invProjection = glm::inverse(projection);
+    glm::mat4 invView = glm::inverse(view);
+    
+    glm::vec4 rayClip = glm::vec4(x, y, -1.0f, 1.0f);
+    glm::vec4 rayEye = invProjection * rayClip;
+    rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+    glm::vec4 rayWorld = invView * rayEye;
+    
+    glm::vec3 rayDir = glm::normalize(glm::vec3(rayWorld));
+    
+    // Calcula posição da câmera
+    glm::vec4 cameraPos = invView * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    
+    // Projeta o ray para um plano no nível do archer
+    float planeY = pos_y - 15.0f;
+    float t = (planeY - cameraPos.y) / rayDir.y;
+    glm::vec3 targetPos = glm::vec3(cameraPos) + t * rayDir;
+    
+    return targetPos;
+}
+
+// Função para disparar a flecha
+void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection)
+{
+    if (g_ArrowFired) return; // Já disparada
+    
+    g_ArrowFired = true;
+    g_ArrowTime = 0.0f;
+    
+    // Posição inicial da flecha (posição atual do archer)
+    g_ArrowStartPos = glm::vec3(pos_x - 1.5f, pos_y - 10.0f, pos_z + 4.0f);
+    
+    // Posição do cursor do mouse no mundo
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    g_ArrowTargetPos = ScreenToWorldCoordinates(xpos, ypos, window, view, projection);
+    
+    // Calcula pontos de controle para a curva de Bézier
+    glm::vec3 direction = glm::normalize(g_ArrowTargetPos - g_ArrowStartPos);
+    float distance = glm::length(g_ArrowTargetPos - g_ArrowStartPos);
+    
+    // Pontos de controle para criar uma curva mais direta e menos alta
+    g_ArrowControlPoint1 = g_ArrowStartPos + direction * (distance * 1/3) + glm::vec3(0, 1.5f, 0);
+    g_ArrowControlPoint2 = g_ArrowStartPos + direction * (distance * 2/3) + glm::vec3(0, 1.0f, 0);
+    
+    g_ArrowCurrentPos = g_ArrowStartPos;
+}
+
+// Função para atualizar a posição da flecha
+void UpdateArrow(float deltaTime)
+{
+    if (!g_ArrowFired) return;
+    
+    g_ArrowTime += deltaTime;
+    float t = g_ArrowTime / g_ArrowDuration;
+    
+    if (t >= 1.0f) {
+        // Flecha chegou ao destino, reseta
+        g_ArrowFired = false;
+        g_ArrowTime = 0.0f;
+        t = 1.0f;
+    }
+    
+    // Calcula posição atual na curva de Bézier
+    g_ArrowCurrentPos = CalculateBezierPoint(t, g_ArrowStartPos, g_ArrowControlPoint1, 
+                                           g_ArrowControlPoint2, g_ArrowTargetPos);
+    
+    // Calcula orientação baseada na direção direta do alvo
+    glm::vec3 direction = glm::normalize(g_ArrowTargetPos - g_ArrowStartPos);
+    
+    // Método alternativo: usar atan2 de forma mais simples
+    // Assumindo que a flecha originalmente aponta para +Z
+    g_ArrowCurrentRotation.y = atan2(-direction.x, -direction.z);
+    g_ArrowCurrentRotation.x = asin(direction.y);
+    g_ArrowCurrentRotation.z = 0.0f;
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal
