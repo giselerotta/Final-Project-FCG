@@ -356,7 +356,7 @@ int main(int argc, char* argv[])
     float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
     float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
 
-    float speed = 0.7f;     
+    float speed = 4.0f;     
     float prev_time = (float)glfwGetTime();
     float delta_t;
 
@@ -425,7 +425,7 @@ int main(int argc, char* argv[])
             w = -camera_view_vector;
             glm::vec4 u = crossproduct(camera_up_vector, w);
         
-            // Atualiza delta de tempo
+            // Pq isso aqui ta aqui??
             float current_time = (float)glfwGetTime();
             delta_t = current_time - prev_time;
             prev_time = current_time;
@@ -507,23 +507,23 @@ int main(int argc, char* argv[])
 
         float right_x = cos(g_CameraTheta);
         float right_z = -sin(g_CameraTheta);  
-        float speed = 0.15f;
+        float speed = 5.0f;
 
         if (W_pressed) {
-            pos_x += speed * forward_x;
-            pos_z += speed * forward_z;
+            pos_x += speed * g_DeltaTime * forward_x;
+            pos_z += speed * g_DeltaTime * forward_z;
         }
         if (S_pressed) {
-            pos_x -= speed * forward_x;
-            pos_z -= speed * forward_z;
+            pos_x -= speed * g_DeltaTime * forward_x;
+            pos_z -= speed * g_DeltaTime * forward_z;
         }
         if (D_pressed) {
-            pos_x += speed * right_x;
-            pos_z += speed * right_z;
+            pos_x += speed * g_DeltaTime * right_x;
+            pos_z += speed * g_DeltaTime * right_z;
         }
         if (A_pressed) {
-            pos_x -= speed * right_x;
-            pos_z -= speed * right_z;
+            pos_x -= speed * g_DeltaTime * right_x;
+            pos_z -= speed * g_DeltaTime * right_z;
         }
 
         // model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
@@ -744,24 +744,24 @@ int main(int argc, char* argv[])
             IntersectAABB(archer_world_box, plane2_world_box) ||
             IntersectAABB(archer_world_box, plane3_world_box)) {
             if (W_pressed) {
-                pos_x -= speed * forward_x;
-                pos_z -= speed * forward_z;
+                pos_x -= speed * g_DeltaTime * forward_x;
+                pos_z -= speed * g_DeltaTime * forward_z;
             }
             if (S_pressed) {
-                pos_x += speed * forward_x;
-                pos_z += speed * forward_z;
+                pos_x += speed * g_DeltaTime * forward_x;
+                pos_z += speed * g_DeltaTime * forward_z;
             }
             if (D_pressed) {
-                pos_x -= speed * right_x;
-                pos_z -= speed * right_z;
+                pos_x -= speed * g_DeltaTime * right_x;
+                pos_z -= speed * g_DeltaTime * right_z;
             }
             if (A_pressed) {
-                pos_x += speed * right_x;
-                pos_z += speed * right_z;
+                pos_x += speed * g_DeltaTime * right_x;
+                pos_z += speed * g_DeltaTime * right_z;
             }
         }
 
-        g_ArrowCurrentPos.x = g_ArrowCurrentPos.x - 5.0f;
+        //g_ArrowCurrentPos.x = g_ArrowCurrentPos.x - 5.0f;
         if (PointInsideAABB(g_ArrowCurrentPos, target1_world_box) ||
             PointInsideAABB(g_ArrowCurrentPos, target2_world_box) ||
             PointInsideAABB(g_ArrowCurrentPos, target3_world_box) ||
