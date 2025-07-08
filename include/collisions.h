@@ -17,11 +17,5 @@ BoundingBox ComputeLocalBoundingBox(const tinyobj::attrib_t& attrib);
 BoundingBox TransformBoundingBox(const BoundingBox& box, const glm::mat4& model);
 bool IntersectAABB(const BoundingBox& a, const BoundingBox& b);
 bool PointInsideAABB(const glm::vec3& point, const BoundingBox& box);
-bool PointInsidePlane(const glm::vec3& point, const BoundingBox& box);
-
-struct ObjectInstance {
-    std::string name;
-    BoundingBox box_world;
-};
 
 #endif // COLLISIONS_H

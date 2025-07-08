@@ -562,11 +562,11 @@ int main(int argc, char* argv[])
         }
     
         // TARGET 1
-        targets[0] =
+        model =
         Matrix_Translate(T1_posx, -23.0f, -17.0f)
         *  Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
-        model = targets[0];
+        targets[0] = model;
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -580,11 +580,11 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // TARGET 2
-        targets[1] = Matrix_Translate(15, -23.0f, 13)
+        model = Matrix_Translate(15, -23.0f, 13)
         * Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Rotate_Z(4.12)
         * Matrix_Scale(0.01f+T2_scale, 0.01f+T2_scale, 0.01f+T2_scale);
-        model = targets[1];
+        targets[1] = model;
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -598,11 +598,11 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
         // TARGET 3
-        targets[2] = Matrix_Translate(-15, -23.0f, 13)
+        model = Matrix_Translate(-15, -23.0f, 13)
         * Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Rotate_Z(-4.12+T3_rotatez)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
-        model = targets[2];
+        targets[2] = model;
         
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TARGET);
@@ -615,13 +615,15 @@ int main(int argc, char* argv[])
         DrawVirtualObjectWithMaterial("object_4_target", &targetmodel.materials[4]);
         DrawVirtualObjectWithMaterial("object_5_target", &targetmodel.materials[5]);
 
+        float arrow_offset = -7.5f;
         // ARROW
         if (g_ArrowFired && !g_ArrowCollided) {
             // Usa a posição calculada pela curva de Bézier com rotação simplificada
             arrow_model = Matrix_Translate(g_ArrowCurrentPos.x, g_ArrowCurrentPos.y, g_ArrowCurrentPos.z)
             * Matrix_Rotate_Y(g_ArrowCurrentRotation.y + M_PI/2)
             * Matrix_Rotate_X(g_ArrowCurrentRotation.x + 5*M_PI/4.0f) // Ajusta a rotação X para apontar para frente
-            * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            * Matrix_Scale(0.3f, 0.3f, 0.3f)
+            * Matrix_Translate(0.0f, 0.0f, arrow_offset);
         } else if (!g_ArrowCollided) {
             // Posição da flecha anexada ao archer, considerando sua rotação
             float archer_offset_x = -1.5f * cos(g_CameraTheta);
@@ -639,7 +641,8 @@ int main(int argc, char* argv[])
             arrow_model = Matrix_Translate(g_ArrowCurrentPos.x, g_ArrowCurrentPos.y, g_ArrowCurrentPos.z)
             * Matrix_Rotate_Y(g_ArrowCurrentRotation.y + M_PI/2)
             * Matrix_Rotate_X(g_ArrowCurrentRotation.x + 5*M_PI/4.0f) // Ajusta a rotação X para apontar para frente
-            * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            * Matrix_Scale(0.3f, 0.3f, 0.3f)
+            * Matrix_Translate(0.0f, 0.0f, arrow_offset);
         }
         model = arrow_model;
         
@@ -761,21 +764,17 @@ int main(int argc, char* argv[])
             }
         }
 
-        //g_ArrowCurrentPos.x = g_ArrowCurrentPos.x - 5.0f;
-        if (PointInsideAABB(g_ArrowCurrentPos, target1_world_box) ||
+        if (PointInsideAABB(g_ArrowCurrentPos, target1_world_box) || // Colisão ponto-cubo
             PointInsideAABB(g_ArrowCurrentPos, target2_world_box) ||
             PointInsideAABB(g_ArrowCurrentPos, target3_world_box) ||
-            // Não está detectando as colisões com os planos
-            PointInsidePlane(g_ArrowCurrentPos, plane0_world_box) || 
-            PointInsidePlane(g_ArrowCurrentPos, plane1_world_box) ||
-            PointInsidePlane(g_ArrowCurrentPos, plane2_world_box) ||
-            PointInsidePlane(g_ArrowCurrentPos, plane3_world_box)){
+            IntersectAABB(arrow_world_box, plane0_world_box) || // Colisão cubo-plano
+            IntersectAABB(arrow_world_box, plane1_world_box) ||
+            IntersectAABB(arrow_world_box, plane2_world_box) ||
+            IntersectAABB(arrow_world_box, plane3_world_box)){
             if(!g_ArrowCollided) {
                 // Se a flecha colidiu, vai ficar fixa na posição da colisão
                 g_ArrowFired = false;
                 g_ArrowCollided = true;
-                g_ArrowCurrentPos = g_ArrowCurrentPos;
-                g_ArrowCurrentRotation = g_ArrowCurrentRotation;
             }
         }
 
@@ -1585,6 +1584,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_UsePerspectiveProjection = true;
     }
 
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    {
+        g_ArrowCollided = false;
+        g_ArrowCurrentPos = g_ArrowStartPos;
+    }
+
     // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
     if (key == GLFW_KEY_O && action == GLFW_PRESS)
     {
@@ -1783,6 +1788,13 @@ void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection)
     // Calcula pontos de controle para a curva de Bézier
     glm::vec3 direction = glm::normalize(g_ArrowTargetPos - g_ArrowStartPos);
     float distance = glm::length(g_ArrowTargetPos - g_ArrowStartPos);
+
+    float arrow_length = 15.0926f;
+    float arrow_scale = 0.3f;
+    float arrow_offset = (arrow_length / 2.0f) * arrow_scale;
+
+    g_ArrowStartPos += direction * arrow_offset;
+    g_ArrowTargetPos += direction * arrow_offset;
     
     // Pontos de controle para criar uma curva mais direta e menos alta
     g_ArrowControlPoint1 = g_ArrowStartPos + direction * (distance * 1/3) + glm::vec3(0, 1.5f, 0);
