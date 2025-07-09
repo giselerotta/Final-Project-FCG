@@ -78,6 +78,7 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 // outras informações do programa. Definidas após main().
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 void TextRendering_ScoreandGameOVer(GLFWwindow* window);
+void TextRendering_RecoverArrow(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -678,6 +679,7 @@ int main(int argc, char* argv[])
 
         TextRendering_ShowFramesPerSecond(window);
         TextRendering_ScoreandGameOVer(window);
+        TextRendering_RecoverArrow(window);
 
         glfwSwapBuffers(window);
 
@@ -1537,6 +1539,22 @@ void TextRendering_ScoreandGameOVer(GLFWwindow* window)
     }
 }
 
+// Renderizar mensagem de recuperar flecha
+void TextRendering_RecoverArrow(GLFWwindow* window)
+{
+    if (!g_ArrowCollided) return; // Só mostra se a flecha estiver fixa
+    
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+    
+    const char* message = "Aperte a tecla C para recuperar a flecha";
+    int numchars = strlen(message);
+    
+    float x = -1.0f + (2.0f - numchars * charwidth) / 2.0f; // Centralizado
+    float y = -1.0f + lineheight * 2.0f; // Parte inferior da tela
+    
+    TextRendering_PrintString(window, message, x, y, 1.0f);
+}
 
 // Função para debugging: imprime no terminal todas informações de um modelo
 // geométrico carregado de um arquivo ".obj".
