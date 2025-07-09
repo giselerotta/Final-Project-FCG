@@ -7,7 +7,6 @@
 #include <vector>
 #include "object.h"
 
-// Estrutura para Axis-Aligned Bounding Box (AABB)
 struct BoundingBox {
     glm::vec3 min;
     glm::vec3 max;

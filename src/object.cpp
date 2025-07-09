@@ -6,8 +6,6 @@
     // Veja: https://github.com/syoyo/tinyobjloader
 ObjModel::ObjModel(const char* filename, const char* basepath, bool triangulate)
     {
-        printf("Carregando objetos do arquivo \"%s\"...\n", filename);
-
         // Se basepath == NULL, então setamos basepath como o dirname do
         // filename, para que os arquivos MTL sejam corretamente carregados caso
         // estejam no mesmo diretório dos arquivos OBJ.
@@ -47,6 +45,4 @@ ObjModel::ObjModel(const char* filename, const char* basepath, bool triangulate)
             }
             printf("- Objeto '%s'\n", shapes[shape].name.c_str());
         }
-
-        printf("OK.\n");
     }

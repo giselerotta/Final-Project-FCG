@@ -52,10 +52,6 @@
 
 #define M_PI 3.14159265358979323846
 
-// Declaração de funções utilizadas para pilha de matrizes de modelagem.
-void PushMatrix(glm::mat4 M);
-void PopMatrix(glm::mat4& M);
-
 // Declaração de várias funções utilizadas em main().  Essas estão definidas
 // logo após a definição de main() neste arquivo.
 void BuildTrianglesAndAddToVirtualScene(ObjModel*); // Constrói representação de um ObjModel como malha de triângulos para renderização
@@ -85,8 +81,6 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 // Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
 // outras informações do programa. Definidas após main().
 void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
-void TextRendering_ShowEulerAngles(GLFWwindow* window);
-void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
@@ -132,11 +126,6 @@ std::stack<glm::mat4>  g_MatrixStack;
 
 // Razão de proporção da janela (largura/altura). Veja função FramebufferSizeCallback().
 float g_ScreenRatio = 1.0f;
-
-// Ângulos de Euler que controlam a rotação de um dos cubos da cena virtual
-float g_AngleX = 0.0f;
-float g_AngleY = 0.0f;
-float g_AngleZ = 0.0f;
 
 float pos_x = 0.0f;
 float pos_y = -10.0f;
@@ -444,26 +433,10 @@ int main(int argc, char* argv[])
         float nearplane = -0.1f;  // Posição do "near plane"
         float farplane  = -100.0f; // Posição do "far plane"
 
-        if (g_UsePerspectiveProjection)
-        {
-            // Projeção Perspectiva.
-            // Para definição do field of view (FOV), veja slides 205-215 do documento Aula_09_Projecoes.pdf.
-            float field_of_view = 3.141592 / 3.0f;
-            projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
-        }
-        else
-        {
-            // Projeção Ortográfica.
-            // Para definição dos valores l, r, b, t ("left", "right", "bottom", "top"),
-            // PARA PROJEÇÃO ORTOGRÁFICA veja slides 219-224 do documento Aula_09_Projecoes.pdf.
-            // Para simular um "zoom" ortográfico, computamos o valor de "t"
-            // utilizando a variável g_CameraDistance.
-            float t = 1.5f*g_CameraDistance/2.5f;
-            float b = -t;
-            float r = t*g_ScreenRatio;
-            float l = -r;
-            projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
-        }
+        // Projeção Perspectiva.
+        // Para definição do field of view (FOV), veja slides 205-215 do documento Aula_09_Projecoes.pdf.
+        float field_of_view = 3.141592 / 3.0f;
+        projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
 
         glm::mat4 model = Matrix_Identity();
         glm::mat4 archer_model = Matrix_Identity();
@@ -525,19 +498,6 @@ int main(int argc, char* argv[])
             pos_x -= speed * g_DeltaTime * right_x;
             pos_z -= speed * g_DeltaTime * right_z;
         }
-
-        // model = Matrix_Translate(pos_x, pos_y-5.0f,pos_z) 
-        // * Matrix_Rotate_Y(g_CameraTheta + M_PI)
-        // * Matrix_Scale(0.1f, 0.1f, 0.1f);
-        
-        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        // glUniform1i(g_object_id_uniform, CHARACTER);
-        // glUniform1i(g_lighting_model_uniform, 0); // Phong para CHARACTER
-        
-        // // Desenhamos o modelo do Character
-        // if(look_at){
-        //     DrawVirtualObject("Base_Male");
-        // }
 
         // ARCHER
         archer_model = Matrix_Translate(pos_x, pos_y-23.0f, pos_z) 
@@ -646,12 +606,6 @@ int main(int argc, char* argv[])
         }
         model = arrow_model;
         
-        // Matrix_Translate(pos_x, pos_y-23.0f, pos_z) * Matrix_Translate(-1.5, -10.0f, 4)
-        // *  Matrix_Rotate_X(10.41)
-        // *  Matrix_Rotate_Y(g_CameraTheta + M_PI) *  Matrix_Rotate_Y(9.82)
-        // *  Matrix_Rotate_Z(11.58)
-        // *  Matrix_Scale(0.3f, 0.3f, 0.3f);
-        
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ARROW);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
@@ -670,7 +624,7 @@ int main(int argc, char* argv[])
         * Matrix_Scale(size, size, size);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE_LEFT);
-        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
+        glUniform1i(g_lighting_model_uniform, 0); 
         DrawVirtualObject("the_plane");
         planes[0] = model; 
 
@@ -680,7 +634,7 @@ int main(int argc, char* argv[])
         * Matrix_Scale(size, size, size);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE_RIGHT);
-        glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
+        glUniform1i(g_lighting_model_uniform, 0); 
         DrawVirtualObject("the_plane");
         planes[1] = model;
 
@@ -688,12 +642,14 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(0.0f, -size, 0.0f) * Matrix_Scale(size,size,size);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE_BOTTOM);
+        glUniform1i(g_lighting_model_uniform, 0); 
         DrawVirtualObject("the_plane");
 
         // PLANE TOP
         model = Matrix_Translate(0.0f, size, 0.0f) * Matrix_Scale(size,size,size);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE_TOP);
+        glUniform1i(g_lighting_model_uniform, 0); 
         DrawVirtualObject("the_plane");
 
         // PLANE FRONT
@@ -713,14 +669,6 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE_BACK);
         DrawVirtualObject("the_plane");
         planes[3] = model;
-        
-        //glCullFace(GL_FRONT);
-        // glUniform1i(g_object_id_uniform, PLANE);
-        // glUniform1i(g_lighting_model_uniform, 0); // Phong para SKYBOX (não importa muito)
-        // model = Matrix_Translate(0.0f,0.0f,0.0f)*Matrix_Scale(5.0f,5.0f,5.0f);
-        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        // DrawVirtualObject("skybox");
-        //glCullFace(GL_BACK);
 
         // Teste de Intersecções
         BoundingBox archer_local_box = ComputeLocalBoundingBox(archermodel.attrib);
@@ -778,13 +726,6 @@ int main(int argc, char* argv[])
             }
         }
 
-        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-        // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
-
-        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-        TextRendering_ShowProjection(window);
-
         // Imprimimos na tela informação sobre o número de quadros renderizados
         // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
@@ -814,7 +755,6 @@ int main(int argc, char* argv[])
 // Função que carrega uma imagem para ser utilizada como textura
 void LoadTextureImage(const char* filename)
 {
-    //printf("Carregando imagem \"%s\"... ", filename);
 
     // Primeiro fazemos a leitura da imagem do disco
     stbi_set_flip_vertically_on_load(true);
@@ -828,8 +768,6 @@ void LoadTextureImage(const char* filename)
         fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename);
         std::exit(EXIT_FAILURE);
     }
-
-    //printf("OK (%dx%d).\n", width, height);
 
     // Agora criamos objetos na GPU com OpenGL para armazenar a textura
     GLuint texture_id;
@@ -974,26 +912,6 @@ void LoadShadersFromFiles()
     glUseProgram(0);
 }
 
-// Função que pega a matriz M e guarda a mesma no topo da pilha
-void PushMatrix(glm::mat4 M)
-{
-    g_MatrixStack.push(M);
-}
-
-// Função que remove a matriz atualmente no topo da pilha e armazena a mesma na variável M
-void PopMatrix(glm::mat4& M)
-{
-    if ( g_MatrixStack.empty() )
-    {
-        M = Matrix_Identity();
-    }
-    else
-    {
-        M = g_MatrixStack.top();
-        g_MatrixStack.pop();
-    }
-}
-
 // Função que computa as normais de um ObjModel, caso elas não tenham sido
 // especificadas dentro do arquivo ".obj"
 void ComputeNormals(ObjModel* model)
@@ -1033,8 +951,6 @@ void ComputeNormals(ObjModel* model)
             const glm::vec4  b = vertices[1];
             const glm::vec4  c = vertices[2];
 
-            // PREENCHA AQUI o cálculo da normal de um triângulo cujos vértices
-            // estão nos pontos "a", "b", e "c", definidos no sentido anti-horário.
             const glm::vec4  u = b - a;
             const glm::vec4  v = c - a;
             const glm::vec4  n = crossproduct(u,v);
@@ -1098,7 +1014,6 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                 const float vx = model->attrib.vertices[3*idx.vertex_index + 0];
                 const float vy = model->attrib.vertices[3*idx.vertex_index + 1];
                 const float vz = model->attrib.vertices[3*idx.vertex_index + 2];
-                //printf("tri %d vert %d = (%.2f, %.2f, %.2f)\n", (int)triangle, (int)vertex, vx, vy, vz);
                 model_coefficients.push_back( vx ); // X
                 model_coefficients.push_back( vy ); // Y
                 model_coefficients.push_back( vz ); // Z
@@ -1138,12 +1053,10 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         theobject.num_indices    = last_index - first_index + 1; // Número de indices
         theobject.rendering_mode = GL_TRIANGLES;       // Índices correspondem ao tipo de rasterização GL_TRIANGLES.
         theobject.vertex_array_object_id = vertex_array_object_id;
-        // Problema iminente
         theobject.material_id    = shape_material_id; // ID do material associado
 
         g_VirtualScene[model->shapes[shape].name] = theobject;
         
-        // Problema iminente
         // Armazena o modelo para acessar materiais posteriormente
         g_LoadedModels[model->shapes[shape].name] = model;
     }
@@ -1180,7 +1093,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         glBindBuffer(GL_ARRAY_BUFFER, VBO_texture_coefficients_id);
         glBufferData(GL_ARRAY_BUFFER, texture_coefficients.size() * sizeof(float), NULL, GL_STATIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, texture_coefficients.size() * sizeof(float), texture_coefficients.data());
-        location = 2; // "(location = 1)" em "shader_vertex.glsl"
+        location = 2; // "(location = 2)" em "shader_vertex.glsl"
         number_of_dimensions = 2; // vec2 em "shader_vertex.glsl"
         glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(location);
@@ -1536,70 +1449,20 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
-
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
     // Se o usuário apertar a tecla espaço, dispara a flecha ou reseta os ângulos.
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
-        // Dispara a flecha se ainda não foi disparada e está no modo look-at
+        // Dispara a flecha se ainda não foi disparada
         if (!g_ArrowFired && !g_ArrowCollided) {
             FireArrow(window, g_CurrentView, g_CurrentProjection);
-        } else {
-            // Comportamento original do espaço
-            g_AngleX = 0.0f;
-            g_AngleY = 0.0f;
-            g_AngleZ = 0.0f;
-            g_ForearmAngleX = 0.0f;
-            g_ForearmAngleZ = 0.0f;
-            g_TorsoPositionX = 0.0f;
-            g_TorsoPositionY = 0.0f;
-        }
+        } 
     }
 
-    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = true;
-    }
-
+    // Se o usuário apertar a tecla C, reseta a posição da flecha.
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
     {
         g_ArrowCollided = false;
         g_ArrowCurrentPos = g_ArrowStartPos;
-    }
-
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
-
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
     }
 
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
@@ -1898,36 +1761,6 @@ void TextRendering_ShowModelViewProjection(
 
     TextRendering_PrintString(window, " Viewport matrix           NDC      In Pixel Coords.", -1.0f, 1.0f-25*pad, 1.0f);
     TextRendering_PrintMatrixVectorProductMoreDigits(window, viewport_mapping, p_ndc, -1.0f, 1.0f-26*pad, 1.0f);
-}
-
-// Escrevemos na tela os ângulos de Euler definidos nas variáveis globais
-// g_AngleX, g_AngleY, e g_AngleZ.
-void TextRendering_ShowEulerAngles(GLFWwindow* window)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    float pad = TextRendering_LineHeight(window);
-
-    char buffer[80];
-    snprintf(buffer, 80, "Euler Angles rotation matrix = Z(%.2f)*Y(%.2f)*X(%.2f)\n", g_AngleZ, g_AngleY, g_AngleX);
-
-    TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
-}
-
-// Escrevemos na tela qual matriz de projeção está sendo utilizada.
-void TextRendering_ShowProjection(GLFWwindow* window)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    float lineheight = TextRendering_LineHeight(window);
-    float charwidth = TextRendering_CharWidth(window);
-
-    if ( g_UsePerspectiveProjection )
-        TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
-    else
-        TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
 }
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
