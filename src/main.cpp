@@ -405,8 +405,8 @@ int main(int argc, char* argv[])
         if(look_at){
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(pos_x + x, pos_y + 4.0f + y, pos_z + 3.0f + z,1.0f); // Ponto "c", centro da câmera
-            camera_lookat_l    = glm::vec4(pos_x, pos_y + 4.0f, pos_z + 3.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_position_c  = glm::vec4(pos_x + x, pos_y + 14.f + y, pos_z + 3.0f + z,1.0f); // Ponto "c", centro da câmera
+            camera_lookat_l    = glm::vec4(pos_x, pos_y + 14.f, pos_z + 3.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         }
@@ -421,7 +421,7 @@ int main(int argc, char* argv[])
             delta_t = current_time - prev_time;
             prev_time = current_time;
 
-            camera_position_c = glm::vec4(pos_x, pos_y, pos_z, 1.0f);
+            camera_position_c = glm::vec4(pos_x, pos_y+10.0f, pos_z, 1.0f);
         }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -502,7 +502,7 @@ int main(int argc, char* argv[])
         }
 
         // ARCHER
-        archer_model = Matrix_Translate(pos_x, pos_y-23.0f, pos_z) 
+        archer_model = Matrix_Translate(pos_x, pos_y-13.0f, pos_z) 
         * Matrix_Rotate_Y(g_CameraTheta + M_PI)
         * Matrix_Scale(0.08f, 0.08f, 0.08f);
         model = archer_model;
@@ -591,7 +591,7 @@ int main(int argc, char* argv[])
             float archer_offset_x = -1.5f * cos(g_CameraTheta);
             float archer_offset_z = sin(g_CameraTheta);
             
-            arrow_model =  Matrix_Translate(pos_x + archer_offset_x, pos_y-10.0f, pos_z + archer_offset_z)
+            arrow_model =  Matrix_Translate(pos_x + archer_offset_x, pos_y, pos_z + archer_offset_z)
             *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
             *  Matrix_Rotate_X(10.41)
             *  Matrix_Rotate_Y(9.82) 
@@ -1658,7 +1658,7 @@ void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection)
     float archer_offset_x = -1.5f * cos(g_CameraTheta);
     float archer_offset_z = sin(g_CameraTheta);
     
-    g_ArrowStartPos = glm::vec3(pos_x + archer_offset_x, pos_y - 10.0f, pos_z + archer_offset_z);
+    g_ArrowStartPos = glm::vec3(pos_x + archer_offset_x, pos_y, pos_z + archer_offset_z);
     
     // Posição do cursor do mouse no mundo
     double xpos, ypos;
@@ -1677,8 +1677,8 @@ void FireArrow(GLFWwindow* window, glm::mat4 view, glm::mat4 projection)
     g_ArrowTargetPos += direction * arrow_offset;
     
     // Pontos de controle para criar uma curva mais direta e menos alta
-    g_ArrowControlPoint1 = g_ArrowStartPos + direction * (distance * 1/3) + glm::vec3(0, 1.5f, 0);
-    g_ArrowControlPoint2 = g_ArrowStartPos + direction * (distance * 2/3) + glm::vec3(0, 1.0f, 0);
+    g_ArrowControlPoint1 = g_ArrowStartPos + direction * (distance * 1/3) + glm::vec3(0, 4.5f, 0);
+    g_ArrowControlPoint2 = g_ArrowStartPos + direction * (distance * 2/3) + glm::vec3(0, 3.0f, 0);
     
     g_ArrowCurrentPos = g_ArrowStartPos;
 }
