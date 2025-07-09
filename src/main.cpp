@@ -80,8 +80,8 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 
 // Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
 // outras informações do programa. Definidas após main().
-void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
+void TextRendering_ScoreandGameOVer(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -176,9 +176,6 @@ glm::mat4 g_CurrentView, g_CurrentProjection;
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
 
-// Variável que controla se o texto informativo será mostrado na tela.
-bool g_ShowInfoText = true;
-
 // Delta para variação do tempo
 float g_DeltaTime = 0.0f;
 
@@ -189,6 +186,11 @@ float T3_rotatez = 0.0f;
 
 bool T1_flag = true;
 bool T2_flag = true;
+
+// Score e Game Over
+int g_Score = 0; 
+int tries = 0;
+bool game_over = false;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
@@ -610,7 +612,7 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, ARROW);
         glUniform1i(g_lighting_model_uniform, 0); // Phong para TARGET
 
-        if(look_at || g_ArrowFired || g_ArrowCollided) {
+        if((look_at || g_ArrowFired || g_ArrowCollided) && !game_over) {
             DrawVirtualObjectWithMaterial("WoodenArrow", &arrowmodel.materials[0]);
         }
 
@@ -714,8 +716,17 @@ int main(int argc, char* argv[])
 
         if (PointInsideAABB(g_ArrowCurrentPos, target1_world_box) || // Colisão ponto-cubo
             PointInsideAABB(g_ArrowCurrentPos, target2_world_box) ||
-            PointInsideAABB(g_ArrowCurrentPos, target3_world_box) ||
-            IntersectAABB(arrow_world_box, plane0_world_box) || // Colisão cubo-plano
+            PointInsideAABB(g_ArrowCurrentPos, target3_world_box)){
+            if(!g_ArrowCollided) {
+                // Se a flecha colidiu, vai ficar fixa na posição da colisão
+                g_ArrowFired = false;
+                g_ArrowCollided = true;
+                tries += 1;
+                // Se a flecha colidiu com algum alvo, o jogador ganha 50 pontos
+                g_Score += 50;
+            }                
+        }
+        else if (IntersectAABB(arrow_world_box, plane0_world_box) || // Colisão cubo-plano
             IntersectAABB(arrow_world_box, plane1_world_box) ||
             IntersectAABB(arrow_world_box, plane2_world_box) ||
             IntersectAABB(arrow_world_box, plane3_world_box)){
@@ -723,12 +734,18 @@ int main(int argc, char* argv[])
                 // Se a flecha colidiu, vai ficar fixa na posição da colisão
                 g_ArrowFired = false;
                 g_ArrowCollided = true;
+                tries += 1;
             }
+        }
+
+        if (tries == 5){
+            game_over = true;
         }
 
         // Imprimimos na tela informação sobre o número de quadros renderizados
         // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
+        TextRendering_ScoreandGameOVer(window);
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
@@ -1701,75 +1718,10 @@ void ErrorCallback(int error, const char* description)
     fprintf(stderr, "ERROR: GLFW: %s\n", description);
 }
 
-// Esta função recebe um vértice com coordenadas de modelo p_model e passa o
-// mesmo por todos os sistemas de coordenadas armazenados nas matrizes model,
-// view, e projection; e escreve na tela as matrizes e pontos resultantes
-// dessas transformações.
-void TextRendering_ShowModelViewProjection(
-    GLFWwindow* window,
-    glm::mat4 projection,
-    glm::mat4 view,
-    glm::mat4 model,
-    glm::vec4 p_model
-)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    glm::vec4 p_world = model*p_model;
-    glm::vec4 p_camera = view*p_world;
-    glm::vec4 p_clip = projection*p_camera;
-    glm::vec4 p_ndc = p_clip / p_clip.w;
-
-    float pad = TextRendering_LineHeight(window);
-
-    TextRendering_PrintString(window, " Model matrix             Model     In World Coords.", -1.0f, 1.0f-pad, 1.0f);
-    TextRendering_PrintMatrixVectorProduct(window, model, p_model, -1.0f, 1.0f-2*pad, 1.0f);
-
-    TextRendering_PrintString(window, "                                        |  ", -1.0f, 1.0f-6*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .-----------'  ", -1.0f, 1.0f-7*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V              ", -1.0f, 1.0f-8*pad, 1.0f);
-
-    TextRendering_PrintString(window, " View matrix              World     In Camera Coords.", -1.0f, 1.0f-9*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProduct(window, view, p_world, -1.0f, 1.0f-10*pad, 1.0f);
-
-    TextRendering_PrintString(window, "                                        |  ", -1.0f, 1.0f-14*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .-----------'  ", -1.0f, 1.0f-15*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V              ", -1.0f, 1.0f-16*pad, 1.0f);
-
-    TextRendering_PrintString(window, " Projection matrix        Camera                    In NDC", -1.0f, 1.0f-17*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProductDivW(window, projection, p_camera, -1.0f, 1.0f-18*pad, 1.0f);
-
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-
-    glm::vec2 a = glm::vec2(-1, -1);
-    glm::vec2 b = glm::vec2(+1, +1);
-    glm::vec2 p = glm::vec2( 0,  0);
-    glm::vec2 q = glm::vec2(width, height);
-
-    glm::mat4 viewport_mapping = Matrix(
-        (q.x - p.x)/(b.x-a.x), 0.0f, 0.0f, (b.x*p.x - a.x*q.x)/(b.x-a.x),
-        0.0f, (q.y - p.y)/(b.y-a.y), 0.0f, (b.y*p.y - a.y*q.y)/(b.y-a.y),
-        0.0f , 0.0f , 1.0f , 0.0f ,
-        0.0f , 0.0f , 0.0f , 1.0f
-    );
-
-    TextRendering_PrintString(window, "                                                       |  ", -1.0f, 1.0f-22*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .--------------------------'  ", -1.0f, 1.0f-23*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V                           ", -1.0f, 1.0f-24*pad, 1.0f);
-
-    TextRendering_PrintString(window, " Viewport matrix           NDC      In Pixel Coords.", -1.0f, 1.0f-25*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProductMoreDigits(window, viewport_mapping, p_ndc, -1.0f, 1.0f-26*pad, 1.0f);
-}
-
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
 // second).
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
 {
-    if ( !g_ShowInfoText )
-        return;
-
     // Variáveis estáticas (static) mantém seus valores entre chamadas
     // subsequentes da função!
     static float old_seconds = (float)glfwGetTime();
@@ -1797,6 +1749,24 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
     float charwidth = TextRendering_CharWidth(window);
 
     TextRendering_PrintString(window, buffer, 1.0f-(numchars + 1)*charwidth, 1.0f-lineheight, 1.0f);
+}
+
+void TextRendering_ScoreandGameOVer(GLFWwindow* window)
+{
+    static int numchars = 10;
+    char game_over_string[10] = "GAME OVER";
+    char score[8] = "SCORE: ";
+    char score_string[15];
+
+    snprintf(score_string, sizeof(score_string), "SCORE: %d", g_Score);
+
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+
+    TextRendering_PrintString(window, score_string, (1.0f - ((numchars + 1) * charwidth * 3.0f)) / 2.0f, 1.0f-lineheight, 3.0f);
+    if (game_over){
+        TextRendering_PrintString(window, game_over_string, (1.0f - (numchars * charwidth * 7.0f)) / 2.0f, lineheight / 2, 7.0f);
+    }
 }
 
 // Função para debugging: imprime no terminal todas informações de um modelo
