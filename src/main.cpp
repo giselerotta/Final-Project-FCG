@@ -524,9 +524,8 @@ int main(int argc, char* argv[])
         }
     
         // TARGET 1
-        model =
-        Matrix_Translate(T1_posx, -23.0f, -17.0f)
-        *  Matrix_Rotate_X(3*M_PI/2)
+        model = Matrix_Translate(T1_posx, -23.0f, -17.0f)
+        * Matrix_Rotate_X(3*M_PI/2)
         * Matrix_Scale(0.01f, 0.01f, 0.01f);
         targets[0] = model;
         
@@ -593,6 +592,7 @@ int main(int argc, char* argv[])
             
             arrow_model =  Matrix_Translate(pos_x + archer_offset_x, pos_y, pos_z + archer_offset_z)
             *  Matrix_Rotate_Y(g_CameraTheta + M_PI)
+            *  Matrix_Translate(-2.5f, 0, 3.5f)
             *  Matrix_Rotate_X(10.41)
             *  Matrix_Rotate_Y(9.82) 
             *  Matrix_Rotate_Z(11.58)
@@ -1768,9 +1768,9 @@ void TextRendering_ScoreandGameOVer(GLFWwindow* window)
 
     float game_over_x = ((1.0f - (game_over_length * charwidth * 7.0f)) / 2.0f) - 0.5f;
 
-    TextRendering_PrintString(window, score_string, score_x, 1.0f - (lineheight * 2), 3.0f);
+    TextRendering_PrintString(window, score_string, score_x, 1.0f - (lineheight * 3.0f), 3.0f);
     if (game_over) {
-        TextRendering_PrintString(window, game_over_string, game_over_x, lineheight/2, 7.0f);
+        TextRendering_PrintString(window, game_over_string, game_over_x, lineheight/2.0f, 7.0f); 
     }
 }
 
