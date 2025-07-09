@@ -1753,9 +1753,7 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
 
 void TextRendering_ScoreandGameOVer(GLFWwindow* window)
 {
-    static int numchars = 10;
     char game_over_string[10] = "GAME OVER";
-    char score[8] = "SCORE: ";
     char score_string[15];
 
     snprintf(score_string, sizeof(score_string), "SCORE: %d", g_Score);
@@ -1763,11 +1761,19 @@ void TextRendering_ScoreandGameOVer(GLFWwindow* window)
     float lineheight = TextRendering_LineHeight(window);
     float charwidth = TextRendering_CharWidth(window);
 
-    TextRendering_PrintString(window, score_string, (1.0f - ((numchars + 1) * charwidth * 3.0f)) / 2.0f, 1.0f-lineheight, 3.0f);
-    if (game_over){
-        TextRendering_PrintString(window, game_over_string, (1.0f - (numchars * charwidth * 7.0f)) / 2.0f, lineheight / 2, 7.0f);
+    int score_length = strlen(score_string);
+    int game_over_length = strlen(game_over_string);
+
+    float score_x = ((1.0f - (score_length * charwidth * 3.0f)) / 2.0f) - 0.5f;
+
+    float game_over_x = ((1.0f - (game_over_length * charwidth * 7.0f)) / 2.0f) - 0.5f;
+
+    TextRendering_PrintString(window, score_string, score_x, 1.0f - (lineheight * 2), 3.0f);
+    if (game_over) {
+        TextRendering_PrintString(window, game_over_string, game_over_x, lineheight/2, 7.0f);
     }
 }
+
 
 // Função para debugging: imprime no terminal todas informações de um modelo
 // geométrico carregado de um arquivo ".obj".
