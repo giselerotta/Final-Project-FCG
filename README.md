@@ -48,10 +48,10 @@ Utilizamos uma curva de Bézier de terceiro grau para simular a movimentação d
 Tanto a movimentação do arqueiro quanto a da flecha são realizadas baseada na variável `g_DeltaTime`, que computa o intervalo de tempo entre os frames.
 
 ## Contribuições dos Membros
-Em relação a tarefas individuas, a Gisele implementou a movimentação do arqueiro, os testes de colisões, os planos e suas texturas e as transformações dos alvos, enquanto a Isadora realizou a curva de Bézier, a iluminação, as implementações das texturas e dos objetos em `.mtl`. Ademais, todo o restante do trabalho foi realizado com a participação das duas integrantes, que trabalharam em conjunto, cada uma com seu computador.
+Em relação a tarefas individuais, a Gisele implementou a movimentação do arqueiro, os testes de colisões, os planos e suas texturas e as transformações dos alvos, enquanto a Isadora realizou a curva de Bézier, os modelos de iluminação e interpolação, as implementações das texturas e dos objetos em `.mtl`. Ademais, todo o restante do trabalho foi realizado com a participação das duas integrantes simultaneamente por meio da plataforma Discord, trabalhando em conjunto, cada uma com seu computador.
 
 ## Utilização de LLMs
-Foram utilizadas as plataformas Gemini, Copilot e ChatGPT para auxiliar na realização do trabalho, principalmente na implementação das colisões, da curva de Bézier e do mapeamento de texturas em `.mtl`. Para além disso, utilizamos somente para debugar o código, tentar achar erros e/ou soluções para problemas gerais. Tivemos mais dificuldade com as texturas e com as rotações e translações do objeto da flecha, principalmente.
+Foram utilizadas as plataformas Gemini, Copilot e ChatGPT para auxiliar na realização do trabalho, principalmente na implementação dos testes de colisões, da curva de Bézier e do mapeamento de texturas em `.mtl`. Para além disso, utilizamos somente para debugar o código, tentar achar erros e/ou soluções para problemas gerais. Tivemos mais dificuldade com as texturas e com as rotações e translações do objeto da flecha, principalmente. No geral, conclui-se que as LLMs foram úteis principalemnte para ter uma base inicial de como implementar as funcionalidades citadas (Gemini) e na busca por bugs (Copilot), apesar de apresentarem muitos erros em problemas mais complexos e dificuldade em dúvidas que exigiam maior contextualização.
 
 ## Funcionalidades do Jogo
 
@@ -60,6 +60,9 @@ Movimentação da câmera.
 
 ### Cursor do Mouse
 Posiciona o local de destino da flecha quando ela é solta.
+
+### Scroll do Mouse
+Aplica efeito de Zoom in e Zoom out da câmera.
 
 ### Teclas W,A,S,D
 Utilizadas para a movimentação do arqueiro:
