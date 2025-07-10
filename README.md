@@ -2,6 +2,7 @@
 Projeto Final de Fundamentos de Computação Gráfica - INF01047
 - Professor: Eduardo Gastal
 - Integrantes: Gisele Rotta e Isadora Vidor
+- [Vídeo no Youtube](https://youtu.be/k9etKqTP_pg)
 
 Como trabalho final da cadeira de Fundamentos de Computação Gráfica, implementamos um jogo de arco e flecha, que consiste em 5 tentativas dadas ao jogar para acertar os alvos em cena.
 
